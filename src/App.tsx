@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProjectProvider } from './contexts/ProjectContext';
+import SubscriptionGuard from './components/SubscriptionGuard';
 import GrokChat from './components/GrokChat';
 import Page0 from './pages/Page0';
 import Page1 from './pages/Page1';
@@ -38,26 +39,26 @@ function App() {
           <Route path="/home" element={<Page1 />} />
           <Route path="/intro" element={<Page2 />} />
           <Route path="/auth" element={<Page3 />} />
-          <Route path="/tools" element={<Page4 />} />
-          <Route path="/text-to-image" element={<Page5 />} />
-          <Route path="/text-to-video" element={<Page6 />} />
-          <Route path="/image-editor" element={<Page7 />} />
-          <Route path="/voice-generator" element={<Page8 />} />
-          <Route path="/script-writer" element={<Page9 />} />
-          <Route path="/timeline" element={<Page10 />} />
-          <Route path="/media" element={<Page11 />} />
-          <Route path="/export" element={<Page12 />} />
-          <Route path="/analytics" element={<Page13 />} />
-          <Route path="/settings" element={<Page14 />} />
-          <Route path="/tutorials" element={<Page15 />} />
-          <Route path="/community" element={<Page16 />} />
-          <Route path="/marketplace" element={<Page17 />} />
-          <Route path="/collaboration" element={<Page18 />} />
-          <Route path="/templates" element={<Page19 />} />
-          <Route path="/support" element={<Page20 />} />
-          <Route path="/profile" element={<Page21 />} />
-          <Route path="/media-library" element={<MediaLibrary />} />
-          <Route path="/tool/:toolName" element={<ToolWorkspace />} />
+          <Route path="/tools" element={<SubscriptionGuard><Page4 /></SubscriptionGuard>} />
+          <Route path="/text-to-image" element={<SubscriptionGuard><Page5 /></SubscriptionGuard>} />
+          <Route path="/text-to-video" element={<SubscriptionGuard><Page6 /></SubscriptionGuard>} />
+          <Route path="/image-editor" element={<SubscriptionGuard><Page7 /></SubscriptionGuard>} />
+          <Route path="/voice-generator" element={<SubscriptionGuard><Page8 /></SubscriptionGuard>} />
+          <Route path="/script-writer" element={<SubscriptionGuard><Page9 /></SubscriptionGuard>} />
+          <Route path="/timeline" element={<SubscriptionGuard><Page10 /></SubscriptionGuard>} />
+          <Route path="/media" element={<SubscriptionGuard><Page11 /></SubscriptionGuard>} />
+          <Route path="/export" element={<SubscriptionGuard><Page12 /></SubscriptionGuard>} />
+          <Route path="/analytics" element={<SubscriptionGuard><Page13 /></SubscriptionGuard>} />
+          <Route path="/settings" element={<SubscriptionGuard><Page14 /></SubscriptionGuard>} />
+          <Route path="/tutorials" element={<SubscriptionGuard><Page15 /></SubscriptionGuard>} />
+          <Route path="/community" element={<SubscriptionGuard><Page16 /></SubscriptionGuard>} />
+          <Route path="/marketplace" element={<SubscriptionGuard><Page17 /></SubscriptionGuard>} />
+          <Route path="/collaboration" element={<SubscriptionGuard><Page18 /></SubscriptionGuard>} />
+          <Route path="/templates" element={<SubscriptionGuard><Page19 /></SubscriptionGuard>} />
+          <Route path="/support" element={<SubscriptionGuard><Page20 /></SubscriptionGuard>} />
+          <Route path="/profile" element={<SubscriptionGuard><Page21 /></SubscriptionGuard>} />
+          <Route path="/media-library" element={<SubscriptionGuard><MediaLibrary /></SubscriptionGuard>} />
+          <Route path="/tool/:toolName" element={<SubscriptionGuard><ToolWorkspace /></SubscriptionGuard>} />
           <Route path="/pricing" element={<Page21 />} />
         </Routes>
         <GrokChat />

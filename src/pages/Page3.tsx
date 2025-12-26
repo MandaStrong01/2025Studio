@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 import { ArrowLeft, Loader, Crown, Zap, Rocket } from 'lucide-react';
 
 export default function Page3() {
@@ -68,9 +69,49 @@ export default function Page3() {
     }
   };
 
-  const handlePlanSelect = (plan: string, price: number) => {
-    const stripeUrl = `https://buy.stripe.com/test_${plan}`;
-    window.open(stripeUrl, '_blank');
+  const [activatingPlan, setActivatingPlan] = useState(false);
+  const [planError, setPlanError] = useState('');
+
+  const handlePlanSelect = async (planTier: string, price: number) => {
+    setActivatingPlan(true);
+    setPlanError('');
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        setPlanError('Please login first');
+        setActivatingPlan(false);
+        return;
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/activate-subscription`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            plan_tier: planTier,
+            plan_price: price
+          })
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to activate subscription');
+      }
+
+      navigate('/tools');
+    } catch (error) {
+      console.error('Plan activation error:', error);
+      setPlanError(error instanceof Error ? error.message : 'Failed to activate plan. Please try again.');
+      setActivatingPlan(false);
+    }
   };
 
   if (showPlans) {
@@ -82,6 +123,11 @@ export default function Page3() {
           <div className="text-center mb-12">
             <h2 className="text-6xl font-black text-white mb-4">Choose Your Plan</h2>
             <p className="text-2xl text-purple-400">Select the perfect plan for your creative journey</p>
+            {planError && (
+              <div className="mt-6 max-w-2xl mx-auto p-4 bg-red-500/20 border border-red-500/50 rounded-xl">
+                <p className="text-red-400">{planError}</p>
+              </div>
+            )}
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -115,10 +161,12 @@ export default function Page3() {
                   </li>
                 </ul>
                 <button
-                  onClick={() => handlePlanSelect('00', 10)}
-                  className="w-full py-4 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold rounded-xl transition-all"
+                  onClick={() => handlePlanSelect('basic', 10)}
+                  disabled={activatingPlan}
+                  className="w-full py-4 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  Select Basic
+                  {activatingPlan && <Loader className="w-5 h-5 animate-spin" />}
+                  {activatingPlan ? 'Activating...' : 'Select Basic'}
                 </button>
               </div>
             </div>
@@ -160,10 +208,12 @@ export default function Page3() {
                   </li>
                 </ul>
                 <button
-                  onClick={() => handlePlanSelect('01', 20)}
-                  className="w-full py-4 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-black rounded-xl transition-all shadow-lg"
+                  onClick={() => handlePlanSelect('pro', 20)}
+                  disabled={activatingPlan}
+                  className="w-full py-4 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-black rounded-xl transition-all shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  Select Pro
+                  {activatingPlan && <Loader className="w-5 h-5 animate-spin" />}
+                  {activatingPlan ? 'Activating...' : 'Select Pro'}
                 </button>
               </div>
             </div>
@@ -206,22 +256,21 @@ export default function Page3() {
                   </li>
                 </ul>
                 <button
-                  onClick={() => handlePlanSelect('02', 30)}
-                  className="w-full py-4 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold rounded-xl transition-all"
+                  onClick={() => handlePlanSelect('studio', 30)}
+                  disabled={activatingPlan}
+                  className="w-full py-4 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  Select Studio
+                  {activatingPlan && <Loader className="w-5 h-5 animate-spin" />}
+                  {activatingPlan ? 'Activating...' : 'Select Studio'}
                 </button>
               </div>
             </div>
           </div>
 
           <div className="text-center mt-12">
-            <button
-              onClick={() => navigate('/tools')}
-              className="text-purple-400 hover:text-white underline text-lg transition-colors"
-            >
-              Skip for now and explore →
-            </button>
+            <p className="text-gray-400 text-sm">
+              Please select a plan to continue. Payment is required to access the platform.
+            </p>
           </div>
         </div>
       </div>
