@@ -2,7 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
@@ -17,14 +17,17 @@ Deno.serve(async (req: Request) => {
   try {
     const { priceId, successUrl, cancelUrl } = await req.json();
 
+    if (!priceId || !successUrl || !cancelUrl) {
+      throw new Error('Missing required parameters: priceId, successUrl, or cancelUrl');
+    }
+
     const data = {
-      message: "Stripe integration ready",
-      priceId,
-      checkoutUrl: `${successUrl}?session_id=demo_session`,
-      status: "success"
+      error: "Stripe integration not configured. Please add your Stripe API keys to enable payments.",
+      status: "not_configured"
     };
 
     return new Response(JSON.stringify(data), {
+      status: 400,
       headers: {
         ...corsHeaders,
         "Content-Type": "application/json",
