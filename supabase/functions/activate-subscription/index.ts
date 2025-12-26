@@ -44,14 +44,16 @@ Deno.serve(async (req: Request) => {
 
     const { data: subscription, error: updateError } = await supabaseClient
       .from('subscriptions')
-      .update({
+      .upsert({
+        user_id: user.id,
         status: 'active',
         plan_tier: plan_tier,
         plan_price: plan_price,
         current_period_end: expiresAt.toISOString(),
         updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'user_id'
       })
-      .eq('user_id', user.id)
       .select()
       .single();
 
