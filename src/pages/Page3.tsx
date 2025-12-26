@@ -10,33 +10,61 @@ export default function Page3() {
   const [loginPassword, setLoginPassword] = useState('');
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [registerLoading, setRegisterLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');
+  const [registerError, setRegisterError] = useState('');
   const [showPlans, setShowPlans] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
-    const { error } = await signIn(loginEmail, loginPassword);
-    setLoading(false);
-    if (error) {
-      setError(error.message);
-    } else {
-      setShowPlans(true);
+    setLoginLoading(true);
+    setLoginError('');
+    setRegisterError('');
+
+    try {
+      const { error } = await signIn(loginEmail, loginPassword);
+      setLoginLoading(false);
+
+      if (error) {
+        if (error.message.includes('Invalid login credentials')) {
+          setLoginError('Invalid email or password. Please try again.');
+        } else {
+          setLoginError(error.message);
+        }
+      } else {
+        setShowPlans(true);
+      }
+    } catch (err) {
+      setLoginLoading(false);
+      setLoginError('An unexpected error occurred. Please try again.');
+      console.error('Login error:', err);
     }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
-    const { error } = await signUp(registerEmail, registerPassword);
-    setLoading(false);
-    if (error) {
-      setError(error.message);
-    } else {
-      setShowPlans(true);
+    setRegisterLoading(true);
+    setRegisterError('');
+    setLoginError('');
+
+    try {
+      const { error } = await signUp(registerEmail, registerPassword);
+      setRegisterLoading(false);
+
+      if (error) {
+        if (error.message.includes('already registered')) {
+          setRegisterError('This email is already registered. Please login instead.');
+        } else {
+          setRegisterError(error.message);
+        }
+      } else {
+        setShowPlans(true);
+      }
+    } catch (err) {
+      setRegisterLoading(false);
+      setRegisterError('An unexpected error occurred. Please try again.');
+      console.error('Registration error:', err);
     }
   };
 
@@ -221,9 +249,9 @@ export default function Page3() {
         <div className="grid md:grid-cols-2 gap-8">
           <div className="bg-gradient-to-b from-purple-900/30 to-black backdrop-blur-xl rounded-3xl p-10 border border-purple-700/50">
             <h3 className="text-4xl font-black text-white mb-8">Login</h3>
-            {error && (
-              <div className="mb-6 p-4 bg-purple-500/20 border border-purple-500/50 rounded-xl">
-                <p className="text-purple-400">{error}</p>
+            {loginError && (
+              <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-xl">
+                <p className="text-red-400">{loginError}</p>
               </div>
             )}
             <form onSubmit={handleLogin} className="space-y-6">
@@ -251,17 +279,22 @@ export default function Page3() {
               </div>
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loginLoading}
                 className="w-full py-4 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {loading && <Loader className="w-5 h-5 animate-spin" />}
-                {loading ? 'Logging in...' : 'Login'}
+                {loginLoading && <Loader className="w-5 h-5 animate-spin" />}
+                {loginLoading ? 'Logging in...' : 'Login'}
               </button>
             </form>
           </div>
 
           <div className="bg-gradient-to-b from-purple-900/30 to-black backdrop-blur-xl rounded-3xl p-10 border border-purple-700/50">
             <h3 className="text-4xl font-black text-white mb-8">Register</h3>
+            {registerError && (
+              <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-xl">
+                <p className="text-red-400">{registerError}</p>
+              </div>
+            )}
             <form onSubmit={handleRegister} className="space-y-6">
               <div>
                 <label className="block text-sm font-bold text-purple-400 mb-2">Email Address</label>
@@ -287,11 +320,11 @@ export default function Page3() {
               </div>
               <button
                 type="submit"
-                disabled={loading}
+                disabled={registerLoading}
                 className="w-full py-4 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {loading && <Loader className="w-5 h-5 animate-spin" />}
-                {loading ? 'Creating account...' : 'Create Account'}
+                {registerLoading && <Loader className="w-5 h-5 animate-spin" />}
+                {registerLoading ? 'Creating account...' : 'Create Account'}
               </button>
             </form>
           </div>
