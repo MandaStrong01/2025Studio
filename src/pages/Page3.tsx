@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, Loader } from 'lucide-react';
+import { ArrowLeft, Loader, Eye } from 'lucide-react';
 
 export default function Page3() {
   const navigate = useNavigate();
-  const { signIn, signUp, session } = useAuth();
+  const { signIn, signUp, session, isAdmin } = useAuth();
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [registerName, setRegisterName] = useState('');
@@ -325,7 +325,7 @@ export default function Page3() {
             <p className="text-xl text-purple-400">Login or create your account to start creating</p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className={`grid gap-8 ${isAdmin ? 'md:grid-cols-2' : 'max-w-xl mx-auto'}`}>
             <div className="bg-purple-900/30 backdrop-blur-sm border-2 border-purple-500 text-white p-10 rounded-2xl">
               <h3 className="text-3xl font-bold mb-8 text-center">Login</h3>
               {loginError && (
@@ -367,6 +367,7 @@ export default function Page3() {
               </form>
             </div>
 
+            {isAdmin && (
             <div className="bg-purple-900/30 backdrop-blur-sm border-2 border-purple-500 text-white p-10 rounded-2xl">
               <h3 className="text-3xl font-bold mb-8 text-center">Register</h3>
               {registerError && (
@@ -419,6 +420,25 @@ export default function Page3() {
                 </button>
               </form>
             </div>
+            )}
+          </div>
+
+          <div className="text-center mt-12">
+            <div className="mb-6">
+              <div className="inline-block h-px w-32 bg-purple-500/50"></div>
+              <span className="px-4 text-purple-400">or</span>
+              <div className="inline-block h-px w-32 bg-purple-500/50"></div>
+            </div>
+            <button
+              onClick={() => navigate('/home')}
+              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-3 mx-auto"
+            >
+              <Eye className="w-5 h-5" />
+              Browse as Guest (View Only)
+            </button>
+            <p className="text-gray-400 text-sm mt-3">
+              Explore the platform without an account
+            </p>
           </div>
         </div>
       </div>
