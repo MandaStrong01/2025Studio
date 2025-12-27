@@ -18,11 +18,6 @@ Deno.serve(async (req: Request) => {
   try {
     console.log('Starting subscription activation...');
 
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       console.error('Missing authorization header');
@@ -30,11 +25,17 @@ Deno.serve(async (req: Request) => {
     }
 
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+    
+    const anonClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    );
+
+    const { data: { user }, error: authError } = await anonClient.auth.getUser(token);
 
     if (authError || !user) {
       console.error('Auth error:', authError);
-      throw new Error('Invalid authorization');
+      throw new Error('Invalid JWT');
     }
 
     console.log('User authenticated:', user.id);
@@ -47,11 +48,16 @@ Deno.serve(async (req: Request) => {
       throw new Error('Missing plan_tier or plan_price');
     }
 
+    const serviceClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
     const expiresAt = new Date();
     expiresAt.setMonth(expiresAt.getMonth() + 1);
 
     console.log('Attempting to upsert subscription...');
-    const { data: subscription, error: updateError } = await supabaseClient
+    const { data: subscription, error: updateError } = await serviceClient
       .from('subscriptions')
       .upsert({
         user_id: user.id,
