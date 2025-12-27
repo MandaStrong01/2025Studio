@@ -16,6 +16,8 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    console.log('Starting subscription activation...');
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -23,6 +25,7 @@ Deno.serve(async (req: Request) => {
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
+      console.error('Missing authorization header');
       throw new Error('No authorization header');
     }
 
@@ -30,18 +33,24 @@ Deno.serve(async (req: Request) => {
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
 
     if (authError || !user) {
+      console.error('Auth error:', authError);
       throw new Error('Invalid authorization');
     }
 
+    console.log('User authenticated:', user.id);
+
     const { plan_tier, plan_price } = await req.json();
+    console.log('Plan details:', { plan_tier, plan_price });
 
     if (!plan_tier || plan_price === undefined) {
+      console.error('Missing parameters:', { plan_tier, plan_price });
       throw new Error('Missing plan_tier or plan_price');
     }
 
     const expiresAt = new Date();
     expiresAt.setMonth(expiresAt.getMonth() + 1);
 
+    console.log('Attempting to upsert subscription...');
     const { data: subscription, error: updateError } = await supabaseClient
       .from('subscriptions')
       .upsert({
@@ -55,15 +64,23 @@ Deno.serve(async (req: Request) => {
         onConflict: 'user_id'
       })
       .select()
-      .single();
+      .maybeSingle();
 
     if (updateError) {
-      throw updateError;
+      console.error('Database error:', updateError);
+      throw new Error(`Database error: ${updateError.message}`);
     }
 
+    if (!subscription) {
+      console.error('No subscription data returned');
+      throw new Error('Failed to create or update subscription');
+    }
+
+    console.log('Subscription upserted successfully:', subscription.id);
+
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         subscription,
         message: 'Subscription activated successfully'
       }),
@@ -77,7 +94,7 @@ Deno.serve(async (req: Request) => {
   } catch (error) {
     console.error('Subscription activation error:', error);
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: error.message || 'Failed to activate subscription'
       }),
       {

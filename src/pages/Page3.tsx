@@ -101,15 +101,21 @@ export default function Page3() {
       );
 
       const result = await response.json();
+      console.log('Response status:', response.status);
+      console.log('Response data:', result);
 
       if (!response.ok) {
+        console.error('Subscription activation failed:', result);
         throw new Error(result.error || 'Failed to activate subscription');
       }
 
-      navigate('/tools');
+      console.log('Subscription activated successfully');
+      window.location.href = '/tools';
     } catch (error) {
       console.error('Plan activation error:', error);
-      setPlanError(error instanceof Error ? error.message : 'Failed to activate plan. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to activate plan. Please try again.';
+      console.error('Full error details:', errorMessage);
+      setPlanError(errorMessage);
       setActivatingPlan(false);
     }
   };
