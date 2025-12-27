@@ -92,7 +92,7 @@ export default function Page3() {
         studio: 'price_studio'
       };
 
-      const response = await fetch(
+      const checkoutResponse = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`,
         {
           method: 'POST',
@@ -108,15 +108,43 @@ export default function Page3() {
         }
       );
 
-      const result = await response.json();
+      const checkoutResult = await checkoutResponse.json();
 
-      if (!response.ok) {
-        console.error('Stripe checkout failed:', result);
-        throw new Error(result.error || 'Failed to create checkout session');
+      if (checkoutResult.status === 'not_configured') {
+        console.log('Stripe not configured, using direct activation...');
+
+        const activateResponse = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/activate-subscription`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              plan_tier: planTier,
+              plan_price: price
+            })
+          }
+        );
+
+        const activateResult = await activateResponse.json();
+
+        if (!activateResponse.ok) {
+          throw new Error(activateResult.error || 'Failed to activate subscription');
+        }
+
+        navigate('/tools');
+        return;
       }
 
-      if (result.checkoutUrl) {
-        window.location.href = result.checkoutUrl;
+      if (!checkoutResponse.ok) {
+        console.error('Stripe checkout failed:', checkoutResult);
+        throw new Error(checkoutResult.error || 'Failed to create checkout session');
+      }
+
+      if (checkoutResult.checkoutUrl) {
+        window.location.href = checkoutResult.checkoutUrl;
       } else {
         throw new Error('No checkout URL returned');
       }
