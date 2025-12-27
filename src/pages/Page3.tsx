@@ -110,35 +110,35 @@ export default function Page3() {
 
       const checkoutResult = await checkoutResponse.json();
 
-      if (checkoutResult.status === 'not_configured') {
-        console.log('Stripe not configured, using direct activation...');
+      if (!checkoutResponse.ok) {
+        if (checkoutResult.status === 'not_configured' || checkoutResult.error?.includes('Stripe not configured')) {
+          console.log('Stripe not configured, activating subscription directly...');
 
-        const activateResponse = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/activate-subscription`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              plan_tier: planTier,
-              plan_price: price
-            })
+          const activateResponse = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/activate-subscription`,
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                plan_tier: planTier,
+                plan_price: price
+              })
+            }
+          );
+
+          const activateResult = await activateResponse.json();
+
+          if (!activateResponse.ok) {
+            throw new Error(activateResult.error || 'Failed to activate subscription');
           }
-        );
 
-        const activateResult = await activateResponse.json();
-
-        if (!activateResponse.ok) {
-          throw new Error(activateResult.error || 'Failed to activate subscription');
+          navigate('/tools');
+          return;
         }
 
-        navigate('/tools');
-        return;
-      }
-
-      if (!checkoutResponse.ok) {
         console.error('Stripe checkout failed:', checkoutResult);
         throw new Error(checkoutResult.error || 'Failed to create checkout session');
       }
