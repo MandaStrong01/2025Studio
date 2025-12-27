@@ -2,7 +2,7 @@
 
 ## Current Implementation
 
-The app now requires users to complete payment before accessing the platform. Here's what's been implemented:
+The app is now configured to use Stripe for payment processing. Here's what's been implemented:
 
 ### Database Changes
 1. **Registration Flow**: When users register, they automatically receive:
@@ -13,109 +13,123 @@ The app now requires users to complete payment before accessing the platform. He
    - Users with 'pending' subscriptions cannot access the platform
    - Only users with status='active' can access tools and features
 
-### Current Payment Flow (Test Mode)
-The app currently uses a simplified payment activation:
+3. **Stripe Fields**: The subscriptions table includes:
+   - `stripe_customer_id` - Stripe customer ID
+   - `stripe_subscription_id` - Stripe subscription ID
+   - `current_period_end` - Subscription expiration date
+
+### Current Payment Flow
 1. User registers an account
 2. User selects a plan (Basic $10, Pro $20, Studio $30)
-3. Plan is activated immediately via the `activate-subscription` edge function
-4. User gains access to the platform
+3. User is redirected to Stripe Checkout
+4. After payment, Stripe webhook activates the subscription
+5. User gains access to the platform
 
-## Setting Up Real Stripe Payments
+## Setting Up Stripe Payments
 
-To integrate real Stripe payments, follow these steps:
+To enable Stripe payments, follow these steps:
 
-### 1. Get Stripe API Keys
-1. Create a Stripe account at https://stripe.com
-2. Get your API keys from https://dashboard.stripe.com/apikeys
-   - Publishable Key (starts with `pk_`)
-   - Secret Key (starts with `sk_`)
+### 1. Create Stripe Account and Get API Keys
+1. Sign up at https://stripe.com
+2. Navigate to https://dashboard.stripe.com/apikeys
+3. Copy your keys:
+   - **Secret Key** (starts with `sk_test_` for test mode)
+   - **Webhook Secret** (get this in step 4)
 
-### 2. Update Environment Variables
-Add to your `.env` file:
-```
-VITE_STRIPE_PUBLISHABLE_KEY=pk_your_key_here
-```
+### 2. Create Products and Prices in Stripe
+1. Go to https://dashboard.stripe.com/products
+2. Create 3 products with recurring monthly subscriptions:
+   - **Basic Plan**: $10/month
+   - **Pro Plan**: $20/month
+   - **Studio Plan**: $30/month
+3. Copy the Price IDs (they start with `price_`)
 
-### 3. Create Stripe Products and Prices
-In your Stripe Dashboard:
-1. Create 3 products: Basic, Pro, Studio
-2. Set recurring monthly prices: $10, $20, $30
-3. Note the Price IDs (start with `price_`)
-
-### 4. Update the Checkout Function
-Modify `src/pages/Page3.tsx` to use real Stripe Checkout:
+### 3. Update Price IDs in Your Code
+Edit `src/pages/Page3.tsx` line 88-92 and replace the price IDs:
 
 ```typescript
-const handlePlanSelect = async (planTier: string, price: number) => {
-  // Get the correct Stripe Price ID based on plan
-  const priceIds = {
-    basic: 'price_xxxxx',   // Replace with your Price IDs
-    pro: 'price_xxxxx',
-    studio: 'price_xxxxx'
-  };
-
-  // Call Stripe Checkout via your edge function
-  const response = await fetch(
-    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        priceId: priceIds[planTier],
-        successUrl: `${window.location.origin}/payment-success`,
-        cancelUrl: `${window.location.origin}/auth`
-      })
-    }
-  );
-
-  const { checkoutUrl } = await response.json();
-  window.location.href = checkoutUrl;
+const priceIds: Record<string, string> = {
+  basic: 'price_1ABC123',      // Your Basic Price ID
+  pro: 'price_2DEF456',        // Your Pro Price ID
+  studio: 'price_3GHI789'      // Your Studio Price ID
 };
 ```
 
-### 5. Implement Stripe Webhook Handler
-Create a new edge function `stripe-webhook` to handle payment events:
+### 4. Configure Stripe Webhook
+1. Go to https://dashboard.stripe.com/webhooks
+2. Click "Add endpoint"
+3. Use URL: `https://pxvbdsjwvyegzaprbxol.supabase.co/functions/v1/stripe-webhook`
+4. Select these events:
+   - `checkout.session.completed`
+   - `customer.subscription.updated`
+   - `customer.subscription.deleted`
+5. Copy the **Signing Secret** (starts with `whsec_`)
 
-```typescript
-// This function will:
-// 1. Verify the webhook signature
-// 2. Handle checkout.session.completed event
-// 3. Update subscription status to 'active'
-// 4. Set plan_tier and plan_price
-```
+### 5. Add Environment Variables to Supabase
+In your Supabase project dashboard:
+1. Go to Project Settings > Edge Functions > Secrets
+2. Add these secrets:
+   - `STRIPE_SECRET_KEY`: Your Stripe secret key
+   - `STRIPE_WEBHOOK_SECRET`: Your webhook signing secret
 
 ### 6. Test the Integration
-1. Use Stripe test mode with test card: 4242 4242 4242 4242
-2. Verify subscriptions are created and activated correctly
-3. Test subscription cancellation and renewal
+1. Use Stripe test mode
+2. Test card: `4242 4242 4242 4242` (any future expiry, any CVC)
+3. Complete a test purchase
+4. Verify the subscription activates in your database
+5. Check webhook logs in Stripe dashboard
 
-## Important Notes
+## Important Security Notes
 
 - **Never commit Stripe Secret Keys to version control**
-- Always validate webhook signatures to prevent fraud
-- Implement proper error handling for failed payments
-- Set up subscription renewal and cancellation flows
-- Add email notifications for payment events
-- Consider adding a grace period for failed renewals
+- Webhook signatures are automatically validated to prevent fraud
+- All subscription updates go through Stripe webhooks for security
+- Test thoroughly in test mode before going live
 
-## Current Edge Functions
-
-### `activate-subscription`
-Temporary function for testing that immediately activates a subscription.
-**Replace this with proper Stripe Checkout flow in production.**
+## Edge Functions Deployed
 
 ### `stripe-checkout`
-Currently a placeholder. Update this to create actual Stripe Checkout Sessions.
+Creates Stripe Checkout sessions for subscription purchases.
+- Validates user authentication
+- Creates checkout session with plan metadata
+- Redirects to Stripe hosted checkout page
 
-## Next Steps
+### `stripe-webhook`
+Handles Stripe webhook events securely.
+- Validates webhook signatures
+- Processes `checkout.session.completed` events
+- Handles subscription updates and cancellations
+- Updates database with subscription status
 
-1. Sign up for Stripe and get API keys
-2. Create products and prices in Stripe Dashboard
-3. Update the checkout flow to use Stripe Checkout
-4. Implement webhook handler for payment events
-5. Remove the temporary `activate-subscription` function
-6. Test thoroughly with Stripe test mode
-7. Enable live mode when ready to accept real payments
+### `activate-subscription` (TEMPORARY - FOR TESTING ONLY)
+Test function that bypasses Stripe for development.
+- Should ONLY be used during development
+- Remove or disable before production launch
+
+## Going Live
+
+When ready to accept real payments:
+
+1. **Switch to Live Mode in Stripe**
+   - Get live API keys (start with `sk_live_`)
+   - Update webhook endpoint for live mode
+   - Get new webhook secret for live endpoint
+
+2. **Update Supabase Secrets**
+   - Replace test keys with live keys
+   - Update both `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`
+
+3. **Update Price IDs**
+   - Create live products in Stripe (or activate test products)
+   - Update price IDs in `src/pages/Page3.tsx`
+
+4. **Final Testing**
+   - Test with real card (use small amount)
+   - Verify subscription activates
+   - Test cancellation flow
+   - Confirm webhooks are received
+
+5. **Monitor**
+   - Watch Stripe Dashboard for payments
+   - Check webhook logs for any failures
+   - Monitor database for subscription status

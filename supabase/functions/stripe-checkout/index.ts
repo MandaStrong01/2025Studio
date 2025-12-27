@@ -1,4 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
+import Stripe from "npm:stripe@14.10.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,25 +17,80 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const { priceId, successUrl, cancelUrl } = await req.json();
-
-    if (!priceId || !successUrl || !cancelUrl) {
-      throw new Error('Missing required parameters: priceId, successUrl, or cancelUrl');
+    const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
+    
+    if (!stripeKey) {
+      return new Response(
+        JSON.stringify({
+          error: "Stripe not configured. Please add STRIPE_SECRET_KEY.",
+          status: "not_configured"
+        }),
+        {
+          status: 400,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
     }
 
-    const data = {
-      error: "Stripe integration not configured. Please add your Stripe API keys to enable payments.",
-      status: "not_configured"
-    };
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header');
+    }
 
-    return new Response(JSON.stringify(data), {
-      status: 400,
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "application/json",
+    const token = authHeader.replace('Bearer ', '');
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    );
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+    if (authError || !user) {
+      throw new Error('Invalid authorization');
+    }
+
+    const { priceId, planTier, planPrice } = await req.json();
+
+    if (!priceId) {
+      throw new Error('Missing required parameter: priceId');
+    }
+
+    const stripe = new Stripe(stripeKey, {
+      apiVersion: '2024-11-20.acacia',
+    });
+
+    const session = await stripe.checkout.sessions.create({
+      customer_email: user.email,
+      client_reference_id: user.id,
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
+      mode: 'subscription',
+      success_url: `${req.headers.get('origin')}/tools?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${req.headers.get('origin')}/auth`,
+      metadata: {
+        user_id: user.id,
+        plan_tier: planTier,
+        plan_price: planPrice.toString()
       },
     });
+
+    return new Response(
+      JSON.stringify({ checkoutUrl: session.url }),
+      {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
+      }
+    );
   } catch (error) {
+    console.error('Stripe checkout error:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {

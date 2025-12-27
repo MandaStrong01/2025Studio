@@ -85,8 +85,14 @@ export default function Page3() {
         return;
       }
 
+      const priceIds: Record<string, string> = {
+        basic: 'price_basic',
+        pro: 'price_pro',
+        studio: 'price_studio'
+      };
+
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/activate-subscription`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`,
         {
           method: 'POST',
           headers: {
@@ -94,27 +100,28 @@ export default function Page3() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            plan_tier: planTier,
-            plan_price: price
+            priceId: priceIds[planTier],
+            planTier: planTier,
+            planPrice: price
           })
         }
       );
 
       const result = await response.json();
-      console.log('Response status:', response.status);
-      console.log('Response data:', result);
 
       if (!response.ok) {
-        console.error('Subscription activation failed:', result);
-        throw new Error(result.error || 'Failed to activate subscription');
+        console.error('Stripe checkout failed:', result);
+        throw new Error(result.error || 'Failed to create checkout session');
       }
 
-      console.log('Subscription activated successfully');
-      window.location.href = '/tools';
+      if (result.checkoutUrl) {
+        window.location.href = result.checkoutUrl;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
     } catch (error) {
       console.error('Plan activation error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to activate plan. Please try again.';
-      console.error('Full error details:', errorMessage);
       setPlanError(errorMessage);
       setActivatingPlan(false);
     }
