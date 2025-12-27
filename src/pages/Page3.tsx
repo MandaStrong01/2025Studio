@@ -2,19 +2,23 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, Loader, Crown, Zap, Rocket } from 'lucide-react';
+import { ArrowLeft, Loader } from 'lucide-react';
 
 export default function Page3() {
   const navigate = useNavigate();
   const { signIn, signUp } = useAuth();
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const [registerName, setRegisterName] = useState('');
   const [registerEmail, setRegisterEmail] = useState('');
   const [registerPassword, setRegisterPassword] = useState('');
+  const [selectedPlan, setSelectedPlan] = useState<'basic' | 'pro' | 'studio'>('pro');
   const [loginLoading, setLoginLoading] = useState(false);
   const [registerLoading, setRegisterLoading] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
   const [registerError, setRegisterError] = useState('');
+  const [checkoutError, setCheckoutError] = useState('');
   const [showPlans, setShowPlans] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -69,19 +73,16 @@ export default function Page3() {
     }
   };
 
-  const [activatingPlan, setActivatingPlan] = useState(false);
-  const [planError, setPlanError] = useState('');
-
   const handlePlanSelect = async (planTier: string, price: number) => {
-    setActivatingPlan(true);
-    setPlanError('');
+    setCheckoutLoading(true);
+    setCheckoutError('');
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
-        setPlanError('Please login first');
-        setActivatingPlan(false);
+        setCheckoutError('Please login first');
+        setCheckoutLoading(false);
         return;
       }
 
@@ -122,178 +123,167 @@ export default function Page3() {
     } catch (error) {
       console.error('Plan activation error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to activate plan. Please try again.';
-      setPlanError(errorMessage);
-      setActivatingPlan(false);
+      setCheckoutError(errorMessage);
+      setCheckoutLoading(false);
     }
   };
 
   if (showPlans) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center px-4 py-12">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/30 via-black to-purple-900/10"></div>
-
-        <div className="relative z-10 max-w-7xl w-full">
-          <div className="text-center mb-12">
-            <h2 className="text-6xl font-black text-white mb-4">Choose Your Plan</h2>
-            <p className="text-2xl text-purple-400">Select the perfect plan for your creative journey</p>
-            {planError && (
-              <div className="mt-6 max-w-2xl mx-auto p-4 bg-red-500/20 border border-red-500/50 rounded-xl">
-                <p className="text-red-400">{planError}</p>
-              </div>
-            )}
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="group relative bg-gradient-to-b from-purple-900/30 to-black backdrop-blur-xl rounded-3xl p-8 border-2 border-purple-700 hover:border-purple-500 transition-all transform hover:scale-105 hover:-translate-y-2">
-              <div className="absolute inset-0 bg-gradient-to-b from-purple-600/10 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <div className="relative">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-3xl font-bold text-white">Basic</h3>
-                  <Zap className="w-8 h-8 text-purple-400" />
+      <div className="min-h-screen bg-black flex flex-col px-4 py-8">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="max-w-6xl w-full">
+            <div className="text-center mb-12">
+              <h2 className="text-5xl font-black text-white mb-4">Choose Your Plan</h2>
+              <p className="text-xl text-purple-400">Select the perfect plan for your creative journey</p>
+              {checkoutError && (
+                <div className="mt-6 max-w-2xl mx-auto p-4 bg-red-500/20 border border-red-500/50 rounded-xl">
+                  <p className="text-red-400">{checkoutError}</p>
                 </div>
-                <div className="mb-8">
-                  <span className="text-6xl font-black text-white">$10</span>
-                  <span className="text-xl text-gray-400">/mo</span>
-                </div>
-                <ul className="space-y-4 mb-8 text-gray-300">
-                  <li className="flex items-start gap-3">
-                    <span className="text-purple-500 mt-1">✓</span>
-                    <span>720 AI Tools Access</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-purple-500 mt-1">✓</span>
-                    <span>720p Export Quality</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-purple-500 mt-1">✓</span>
-                    <span>5GB Cloud Storage</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-purple-500 mt-1">✓</span>
-                    <span>Community Support</span>
-                  </li>
-                </ul>
-                <button
-                  onClick={() => handlePlanSelect('basic', 10)}
-                  disabled={activatingPlan}
-                  className="w-full py-4 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {activatingPlan && <Loader className="w-5 h-5 animate-spin" />}
-                  {activatingPlan ? 'Activating...' : 'Select Basic'}
-                </button>
-              </div>
+              )}
             </div>
 
-            <div className="group relative bg-gradient-to-b from-purple-800/30 to-black backdrop-blur-xl rounded-3xl p-8 border-4 border-purple-500 transform scale-105">
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-2 rounded-full text-sm font-black shadow-lg">
-                MOST POPULAR
+            <div className="grid md:grid-cols-3 gap-6">
+              <div
+                onClick={() => setSelectedPlan('basic')}
+                className={`cursor-pointer bg-purple-900/30 backdrop-blur-sm border-2 p-8 rounded-2xl transition-all hover:scale-105 ${selectedPlan === 'basic' ? 'border-yellow-400 shadow-lg shadow-yellow-400/50' : 'border-purple-500'}`}
+              >
+                <h3 className="text-2xl font-bold text-white mb-2">Basic</h3>
+                <p className="text-4xl font-black text-purple-300 mb-6">$10<span className="text-lg">/mo</span></p>
+                <ul className="space-y-3 text-white mb-8">
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-400">✓</span>
+                    <span>HD Export</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-400">✓</span>
+                    <span>100 AI Tools</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-400">✓</span>
+                    <span>Basic Templates</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-400">✓</span>
+                    <span>10GB Storage</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-400">✓</span>
+                    <span>Email Support</span>
+                  </li>
+                </ul>
+                {selectedPlan === 'basic' && (
+                  <div className="text-yellow-400 font-bold text-center py-2">✓ SELECTED</div>
+                )}
               </div>
-              <div className="absolute inset-0 bg-gradient-to-b from-purple-600/10 to-transparent rounded-3xl"></div>
-              <div className="relative">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-3xl font-bold text-white">Pro</h3>
-                  <Crown className="w-8 h-8 text-purple-400" />
-                </div>
-                <div className="mb-8">
-                  <span className="text-6xl font-black text-white">$20</span>
-                  <span className="text-xl text-gray-400">/mo</span>
-                </div>
-                <ul className="space-y-4 mb-8 text-gray-300">
-                  <li className="flex items-start gap-3">
-                    <span className="text-purple-400 mt-1">✓</span>
-                    <span>All Basic Features</span>
+
+              <div
+                onClick={() => setSelectedPlan('pro')}
+                className={`cursor-pointer bg-purple-800/30 backdrop-blur-sm border-2 p-8 rounded-2xl transition-all transform scale-105 ${selectedPlan === 'pro' ? 'border-yellow-400 shadow-lg shadow-yellow-400/50' : 'border-purple-400'}`}
+              >
+                <div className="bg-purple-600 text-white text-xs font-bold py-1 px-3 rounded-full inline-block mb-3">POPULAR</div>
+                <h3 className="text-2xl font-bold text-white mb-2">Pro</h3>
+                <p className="text-4xl font-black text-purple-300 mb-6">$20<span className="text-lg">/mo</span></p>
+                <ul className="space-y-3 text-white mb-8">
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-400">✓</span>
+                    <span>4K Export</span>
                   </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-purple-400 mt-1">✓</span>
-                    <span>1080p Full HD Export</span>
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-400">✓</span>
+                    <span>300 AI Tools</span>
                   </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-purple-400 mt-1">✓</span>
-                    <span>50GB Cloud Storage</span>
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-400">✓</span>
+                    <span>Premium Templates</span>
                   </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-purple-400 mt-1">✓</span>
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-400">✓</span>
+                    <span>100GB Storage</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-400">✓</span>
                     <span>Priority Support</span>
                   </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-purple-400 mt-1">✓</span>
-                    <span>Advanced AI Tools</span>
-                  </li>
-                </ul>
-                <button
-                  onClick={() => handlePlanSelect('pro', 20)}
-                  disabled={activatingPlan}
-                  className="w-full py-4 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-black rounded-xl transition-all shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {activatingPlan && <Loader className="w-5 h-5 animate-spin" />}
-                  {activatingPlan ? 'Activating...' : 'Select Pro'}
-                </button>
-              </div>
-            </div>
-
-            <div className="group relative bg-gradient-to-b from-purple-900/30 to-black backdrop-blur-xl rounded-3xl p-8 border-2 border-purple-700 hover:border-purple-500 transition-all transform hover:scale-105 hover:-translate-y-2">
-              <div className="absolute inset-0 bg-gradient-to-b from-purple-600/10 to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <div className="relative">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-3xl font-bold text-white">Studio</h3>
-                  <Rocket className="w-8 h-8 text-purple-400" />
-                </div>
-                <div className="mb-8">
-                  <span className="text-6xl font-black text-white">$30</span>
-                  <span className="text-xl text-gray-400">/mo</span>
-                </div>
-                <ul className="space-y-4 mb-8 text-gray-300">
-                  <li className="flex items-start gap-3">
-                    <span className="text-purple-400 mt-1">✓</span>
-                    <span>All Pro Features</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-purple-400 mt-1">✓</span>
-                    <span>4K Ultra HD Export</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-purple-400 mt-1">✓</span>
-                    <span>Unlimited Storage</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-purple-400 mt-1">✓</span>
-                    <span>24/7 VIP Support</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-purple-400 mt-1">✓</span>
-                    <span>Exclusive AI Models</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-purple-400 mt-1">✓</span>
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-400">✓</span>
                     <span>Commercial License</span>
                   </li>
                 </ul>
-                <button
-                  onClick={() => handlePlanSelect('studio', 30)}
-                  disabled={activatingPlan}
-                  className="w-full py-4 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {activatingPlan && <Loader className="w-5 h-5 animate-spin" />}
-                  {activatingPlan ? 'Activating...' : 'Select Studio'}
-                </button>
+                {selectedPlan === 'pro' && (
+                  <div className="text-yellow-400 font-bold text-center py-2">✓ SELECTED</div>
+                )}
+              </div>
+
+              <div
+                onClick={() => setSelectedPlan('studio')}
+                className={`cursor-pointer bg-purple-900/30 backdrop-blur-sm border-2 p-8 rounded-2xl transition-all hover:scale-105 ${selectedPlan === 'studio' ? 'border-yellow-400 shadow-lg shadow-yellow-400/50' : 'border-purple-500'}`}
+              >
+                <h3 className="text-2xl font-bold text-white mb-2">Studio</h3>
+                <p className="text-4xl font-black text-purple-300 mb-6">$30<span className="text-lg">/mo</span></p>
+                <ul className="space-y-3 text-white mb-8">
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-400">✓</span>
+                    <span>8K Export</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-400">✓</span>
+                    <span>All 600 AI Tools</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-400">✓</span>
+                    <span>Unlimited Templates</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-400">✓</span>
+                    <span>1TB Storage</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-400">✓</span>
+                    <span>24/7 Live Support</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-400">✓</span>
+                    <span>Full Commercial Rights</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-400">✓</span>
+                    <span>Team Collaboration</span>
+                  </li>
+                </ul>
+                {selectedPlan === 'studio' && (
+                  <div className="text-yellow-400 font-bold text-center py-2">✓ SELECTED</div>
+                )}
               </div>
             </div>
-          </div>
 
-          <div className="text-center mt-12">
-            <p className="text-gray-400 text-sm">
-              Please select a plan to continue. Payment is required to access the platform.
-            </p>
+            <div className="text-center mt-10">
+              <button
+                onClick={() => handlePlanSelect(selectedPlan, selectedPlan === 'basic' ? 10 : selectedPlan === 'pro' ? 20 : 30)}
+                disabled={checkoutLoading}
+                className="px-12 py-4 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white text-lg font-bold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-3 mx-auto"
+              >
+                {checkoutLoading && <Loader className="w-6 h-6 animate-spin" />}
+                {checkoutLoading ? 'Redirecting to payment...' : 'Continue to Payment'}
+              </button>
+              <p className="text-gray-400 text-sm mt-4">
+                Secure payment powered by Stripe
+              </p>
+            </div>
           </div>
         </div>
+
+        <footer className="border-t-2 border-purple-500 pt-6 mt-8">
+          <p className="text-white text-sm text-center">
+            MandaStrong1 2025 ~ Author Of Doxy The School Bully ~ Also Find Me On MandaStrong1.Etsy.com
+          </p>
+        </footer>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-4 py-12">
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-900/30 via-black to-purple-900/10"></div>
-
+    <div className="min-h-screen bg-black flex flex-col px-4 py-8">
       <button
         onClick={() => navigate('/intro')}
         className="fixed top-8 left-8 z-20 flex items-center gap-2 px-6 py-3 bg-purple-900/30 hover:bg-purple-800/40 backdrop-blur-md border border-purple-600/50 text-white font-bold rounded-xl transition-all"
@@ -302,96 +292,116 @@ export default function Page3() {
         Back
       </button>
 
-      <div className="relative z-10 max-w-6xl w-full">
-        <div className="text-center mb-12">
-          <h2 className="text-6xl font-black text-white mb-4">Welcome Back</h2>
-          <p className="text-xl text-purple-400">Login or create your account to start creating</p>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-8">
-          <div className="bg-gradient-to-b from-purple-900/30 to-black backdrop-blur-xl rounded-3xl p-10 border border-purple-700/50">
-            <h3 className="text-4xl font-black text-white mb-8">Login</h3>
-            {loginError && (
-              <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-xl">
-                <p className="text-red-400">{loginError}</p>
-              </div>
-            )}
-            <form onSubmit={handleLogin} className="space-y-6">
-              <div>
-                <label className="block text-sm font-bold text-purple-400 mb-2">Email Address</label>
-                <input
-                  type="email"
-                  placeholder="your@email.com"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  className="w-full px-5 py-4 bg-white/5 border border-purple-700/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-purple-400 mb-2">Password</label>
-                <input
-                  type="password"
-                  placeholder="••••••••"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  className="w-full px-5 py-4 bg-white/5 border border-purple-700/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={loginLoading}
-                className="w-full py-4 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {loginLoading && <Loader className="w-5 h-5 animate-spin" />}
-                {loginLoading ? 'Logging in...' : 'Login'}
-              </button>
-            </form>
+      <div className="flex-1 flex items-center justify-center">
+        <div className="max-w-6xl w-full">
+          <div className="text-center mb-12">
+            <h2 className="text-5xl font-black text-white mb-4">Welcome to MandaStrong Studio</h2>
+            <p className="text-xl text-purple-400">Login or create your account to start creating</p>
           </div>
 
-          <div className="bg-gradient-to-b from-purple-900/30 to-black backdrop-blur-xl rounded-3xl p-10 border border-purple-700/50">
-            <h3 className="text-4xl font-black text-white mb-8">Register</h3>
-            {registerError && (
-              <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-xl">
-                <p className="text-red-400">{registerError}</p>
-              </div>
-            )}
-            <form onSubmit={handleRegister} className="space-y-6">
-              <div>
-                <label className="block text-sm font-bold text-purple-400 mb-2">Email Address</label>
-                <input
-                  type="email"
-                  placeholder="your@email.com"
-                  value={registerEmail}
-                  onChange={(e) => setRegisterEmail(e.target.value)}
-                  className="w-full px-5 py-4 bg-white/5 border border-purple-700/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-purple-400 mb-2">Password</label>
-                <input
-                  type="password"
-                  placeholder="••••••••"
-                  value={registerPassword}
-                  onChange={(e) => setRegisterPassword(e.target.value)}
-                  className="w-full px-5 py-4 bg-white/5 border border-purple-700/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={registerLoading}
-                className="w-full py-4 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {registerLoading && <Loader className="w-5 h-5 animate-spin" />}
-                {registerLoading ? 'Creating account...' : 'Create Account'}
-              </button>
-            </form>
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="bg-purple-900/30 backdrop-blur-sm border-2 border-purple-500 text-white p-10 rounded-2xl">
+              <h3 className="text-3xl font-bold mb-8 text-center">Login</h3>
+              {loginError && (
+                <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-xl">
+                  <p className="text-red-400">{loginError}</p>
+                </div>
+              )}
+              <form onSubmit={handleLogin} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-purple-300">Email</label>
+                  <input
+                    type="email"
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    className="w-full px-5 py-4 bg-black/50 border border-purple-400 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-300 transition-colors"
+                    placeholder="your@email.com"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-purple-300">Password</label>
+                  <input
+                    type="password"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    className="w-full px-5 py-4 bg-black/50 border border-purple-400 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-300 transition-colors"
+                    placeholder="••••••••"
+                    required
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={loginLoading}
+                  className="w-full py-4 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {loginLoading && <Loader className="w-5 h-5 animate-spin" />}
+                  {loginLoading ? 'Logging in...' : 'Login'}
+                </button>
+              </form>
+            </div>
+
+            <div className="bg-purple-900/30 backdrop-blur-sm border-2 border-purple-500 text-white p-10 rounded-2xl">
+              <h3 className="text-3xl font-bold mb-8 text-center">Register</h3>
+              {registerError && (
+                <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-xl">
+                  <p className="text-red-400">{registerError}</p>
+                </div>
+              )}
+              <form onSubmit={handleRegister} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-purple-300">Name</label>
+                  <input
+                    type="text"
+                    value={registerName}
+                    onChange={(e) => setRegisterName(e.target.value)}
+                    className="w-full px-5 py-4 bg-black/50 border border-purple-400 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-300 transition-colors"
+                    placeholder="Your Name"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-purple-300">Email</label>
+                  <input
+                    type="email"
+                    value={registerEmail}
+                    onChange={(e) => setRegisterEmail(e.target.value)}
+                    className="w-full px-5 py-4 bg-black/50 border border-purple-400 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-300 transition-colors"
+                    placeholder="your@email.com"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-purple-300">Password</label>
+                  <input
+                    type="password"
+                    value={registerPassword}
+                    onChange={(e) => setRegisterPassword(e.target.value)}
+                    className="w-full px-5 py-4 bg-black/50 border border-purple-400 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-300 transition-colors"
+                    placeholder="••••••••"
+                    required
+                    minLength={6}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={registerLoading}
+                  className="w-full py-4 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {registerLoading && <Loader className="w-5 h-5 animate-spin" />}
+                  {registerLoading ? 'Creating account...' : 'Create Account'}
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </div>
+
+      <footer className="border-t-2 border-purple-500 pt-6 mt-8">
+        <p className="text-white text-sm text-center">
+          MandaStrong1 2025 ~ Author Of Doxy The School Bully ~ Also Find Me On MandaStrong1.Etsy.com
+        </p>
+      </footer>
     </div>
   );
 }
