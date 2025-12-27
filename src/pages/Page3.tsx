@@ -6,7 +6,7 @@ import { ArrowLeft, Loader } from 'lucide-react';
 
 export default function Page3() {
   const navigate = useNavigate();
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, session } = useAuth();
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [registerName, setRegisterName] = useState('');
@@ -78,8 +78,6 @@ export default function Page3() {
     setCheckoutError('');
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-
       if (!session) {
         setCheckoutError('Please login first');
         setCheckoutLoading(false);
