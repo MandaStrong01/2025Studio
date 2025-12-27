@@ -6,7 +6,7 @@ import { ArrowLeft, Loader, Eye } from 'lucide-react';
 
 export default function Page3() {
   const navigate = useNavigate();
-  const { signIn, signUp, session, isAdmin } = useAuth();
+  const { signIn, signUp, session } = useAuth();
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [registerName, setRegisterName] = useState('');
@@ -325,7 +325,7 @@ export default function Page3() {
             <p className="text-xl text-purple-400">Login or create your account to start creating</p>
           </div>
 
-          <div className={`grid gap-8 ${isAdmin ? 'md:grid-cols-2' : 'max-w-xl mx-auto'}`}>
+          <div className="grid md:grid-cols-2 gap-8">
             <div className="bg-purple-900/30 backdrop-blur-sm border-2 border-purple-500 text-white p-10 rounded-2xl">
               <h3 className="text-3xl font-bold mb-8 text-center">Login</h3>
               {loginError && (
@@ -367,7 +367,6 @@ export default function Page3() {
               </form>
             </div>
 
-            {isAdmin && (
             <div className="bg-purple-900/30 backdrop-blur-sm border-2 border-purple-500 text-white p-10 rounded-2xl">
               <h3 className="text-3xl font-bold mb-8 text-center">Register</h3>
               {registerError && (
@@ -420,7 +419,6 @@ export default function Page3() {
                 </button>
               </form>
             </div>
-            )}
           </div>
 
           <div className="text-center mt-12">
