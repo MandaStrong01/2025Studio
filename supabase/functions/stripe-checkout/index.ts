@@ -18,7 +18,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
-    
+
     if (!stripeKey) {
       return new Response(
         JSON.stringify({
@@ -58,8 +58,10 @@ Deno.serve(async (req: Request) => {
     }
 
     const stripe = new Stripe(stripeKey, {
-      apiVersion: '2024-11-20.acacia',
+      apiVersion: '2024-10-28.acacia',
     });
+
+    const origin = req.headers.get('origin') || req.headers.get('referer')?.split('/').slice(0, 3).join('/') || 'http://localhost:5173';
 
     const session = await stripe.checkout.sessions.create({
       customer_email: user.email,
@@ -71,8 +73,8 @@ Deno.serve(async (req: Request) => {
         },
       ],
       mode: 'subscription',
-      success_url: `${req.headers.get('origin')}/tools?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.get('origin')}/auth`,
+      success_url: `${origin}/tools?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/auth`,
       metadata: {
         user_id: user.id,
         plan_tier: planTier,
@@ -92,7 +94,10 @@ Deno.serve(async (req: Request) => {
   } catch (error) {
     console.error('Stripe checkout error:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({
+        error: error.message,
+        details: error.toString()
+      }),
       {
         status: 400,
         headers: {
