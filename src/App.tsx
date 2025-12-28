@@ -19,11 +19,11 @@ import Page12 from './pages/Page12';
 import Page13 from './pages/Page13';
 import Page14 from './pages/Page14';
 import Page15 from './pages/Page15';
+import Page16 from './pages/Page16';
 import Page17 from './pages/Page17';
 import Page18 from './pages/Page18';
 import Page19 from './pages/Page19';
 import Page20 from './pages/Page20';
-import Page20Community from './pages/Page20Community';
 import Page21 from './pages/Page21';
 import ToolWorkspace from './pages/ToolWorkspace';
 import MediaLibrary from './pages/MediaLibrary';
@@ -52,11 +52,11 @@ function App() {
           <Route path="/analytics" element={<SubscriptionGuard><Page13 /></SubscriptionGuard>} />
           <Route path="/settings" element={<SubscriptionGuard><Page14 /></SubscriptionGuard>} />
           <Route path="/tutorials" element={<SubscriptionGuard><Page15 /></SubscriptionGuard>} />
-          <Route path="/community" element={<SubscriptionGuard><Page20Community /></SubscriptionGuard>} />
+          <Route path="/render" element={<SubscriptionGuard><Page16 /></SubscriptionGuard>} />
           <Route path="/marketplace" element={<SubscriptionGuard><Page17 /></SubscriptionGuard>} />
-          <Route path="/collaboration" element={<SubscriptionGuard><Page18 /></SubscriptionGuard>} />
-          <Route path="/templates" element={<SubscriptionGuard><Page19 /></SubscriptionGuard>} />
-          <Route path="/support" element={<SubscriptionGuard><Page20 /></SubscriptionGuard>} />
+          <Route path="/tos" element={<SubscriptionGuard><Page18 /></SubscriptionGuard>} />
+          <Route path="/helpdesk" element={<SubscriptionGuard><Page19 /></SubscriptionGuard>} />
+          <Route path="/community" element={<SubscriptionGuard><Page20 /></SubscriptionGuard>} />
           <Route path="/profile" element={<SubscriptionGuard><Page21 /></SubscriptionGuard>} />
           <Route path="/media-library" element={<SubscriptionGuard><MediaLibrary /></SubscriptionGuard>} />
           <Route path="/video-manager" element={<SubscriptionGuard><VideoManager /></SubscriptionGuard>} />
