@@ -1,20 +1,29 @@
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Sparkles } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { getVideoUrl, REQUIRED_VIDEOS } from '../lib/videoAssets';
 
 export default function Page2() {
   const navigate = useNavigate();
+  const [videoUrl, setVideoUrl] = useState<string>('');
+
+  useEffect(() => {
+    getVideoUrl(REQUIRED_VIDEOS.BACKGROUND).then(setVideoUrl);
+  }, []);
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-black">
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover opacity-50"
-      >
-        <source src="/static/video/background.mp4" type="video/mp4" />
-      </video>
+      {videoUrl && (
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover opacity-50"
+        >
+          <source src={videoUrl} type="video/mp4" />
+        </video>
+      )}
 
       <div className="absolute inset-0 bg-gradient-to-br from-black via-purple-900/50 to-black" />
 

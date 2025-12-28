@@ -1,4 +1,6 @@
 import { Home, ArrowLeft, BookOpen, Play } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { getVideoUrl, REQUIRED_VIDEOS } from '../lib/videoAssets';
 
 interface PageProps {
   onNavigate: (page: number) => void;
@@ -9,9 +11,12 @@ const EXTERNAL_URLS = {
   store: import.meta.env.VITE_ETSY_STORE_URL || 'https://MandaStrong1.Etsy.com',
 };
 
-const VIDEO_PATH = import.meta.env.VITE_OUTRO_VIDEO_PATH || '/static/video/thatsallfolks.mp4';
-
 export default function Page21({ onNavigate }: PageProps) {
+  const [videoUrl, setVideoUrl] = useState<string>('');
+
+  useEffect(() => {
+    getVideoUrl(REQUIRED_VIDEOS.OUTRO).then(setVideoUrl);
+  }, []);
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900/30 via-black to-purple-900/20 text-white flex flex-col">
       <button className="fixed top-6 right-6 z-50 w-12 h-12 bg-gradient-to-br from-purple-600 to-purple-800 hover:from-purple-500 hover:to-purple-700 rounded-full flex items-center justify-center shadow-lg shadow-purple-500/50 transition-all hover:scale-110">
@@ -21,15 +26,17 @@ export default function Page21({ onNavigate }: PageProps) {
         <div className="max-w-6xl w-full text-center">
           <div className="bg-black/30 backdrop-blur-sm rounded-2xl border border-purple-500/30 p-8 mb-8">
             <div className="aspect-video bg-black rounded-lg overflow-hidden border border-purple-500/30 mb-6">
-              <video
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="w-full h-full object-cover"
-              >
-                <source src={VIDEO_PATH} type="video/mp4" />
-              </video>
+              {videoUrl && (
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover"
+                >
+                  <source src={videoUrl} type="video/mp4" />
+                </video>
+              )}
             </div>
 
             <h1 className="text-6xl md:text-7xl font-black mb-8 tracking-tight text-purple-400">

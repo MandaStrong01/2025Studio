@@ -8,7 +8,7 @@ import EditorNav from '../components/EditorNav';
 
 export default function Page11() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { movieDuration, setMovieDuration, addMediaFiles, currentProject } = useProject();
   const [isUploading, setIsUploading] = useState(false);
   const [uploadCount, setUploadCount] = useState(0);
@@ -160,13 +160,24 @@ export default function Page11() {
 
       <div className="relative z-10 max-w-7xl mx-auto p-8">
         <div className="flex justify-between items-center mb-4">
-          <button
-            onClick={() => navigate('/timeline')}
-            className="px-4 py-2 bg-purple-900/50 hover:bg-purple-800 rounded-lg text-white text-sm font-semibold transition-all flex items-center gap-2 border border-purple-600/50"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            My Projects
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => navigate('/timeline')}
+              className="px-4 py-2 bg-purple-900/50 hover:bg-purple-800 rounded-lg text-white text-sm font-semibold transition-all flex items-center gap-2 border border-purple-600/50"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              My Projects
+            </button>
+            {isAdmin && (
+              <button
+                onClick={() => navigate('/video-manager')}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-sm font-semibold transition-all flex items-center gap-2 border border-purple-500/50"
+              >
+                <Film className="w-4 h-4" />
+                Video Assets
+              </button>
+            )}
+          </div>
           <label className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white text-sm font-semibold transition-all flex items-center gap-2 cursor-pointer">
             <Upload className="w-4 h-4" />
             {isUploading ? `Uploading ${uploadCount}...` : 'Upload Media'}

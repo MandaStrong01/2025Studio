@@ -27,6 +27,7 @@ import Page20 from './pages/Page20';
 import Page21 from './pages/Page21';
 import ToolWorkspace from './pages/ToolWorkspace';
 import MediaLibrary from './pages/MediaLibrary';
+import VideoManager from './pages/VideoManager';
 
 function App() {
   return (
@@ -58,6 +59,7 @@ function App() {
           <Route path="/support" element={<SubscriptionGuard><Page20 /></SubscriptionGuard>} />
           <Route path="/profile" element={<SubscriptionGuard><Page21 /></SubscriptionGuard>} />
           <Route path="/media-library" element={<SubscriptionGuard><MediaLibrary /></SubscriptionGuard>} />
+          <Route path="/video-manager" element={<SubscriptionGuard><VideoManager /></SubscriptionGuard>} />
           <Route path="/tool/:toolName" element={<SubscriptionGuard><ToolWorkspace /></SubscriptionGuard>} />
           <Route path="/pricing" element={<Page21 />} />
         </Routes>
