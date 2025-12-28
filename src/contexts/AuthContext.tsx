@@ -6,9 +6,14 @@ interface Subscription {
   id: string;
   user_id: string;
   status: string;
-  plan: string;
+  plan_tier: string;
+  plan_price: number;
+  stripe_customer_id?: string;
+  stripe_subscription_id?: string;
   started_at: string;
-  expires_at: string | null;
+  current_period_end: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 interface UserRole {
