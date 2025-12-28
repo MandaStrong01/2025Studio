@@ -140,7 +140,14 @@ src/
 - 720 total tools across 6 pages
 - Tool categories: Image, Video, Audio, Text generation
 - Click to launch tool interface
+- Two modes: Upload existing files or Create with AI
+- **Upload Mode**: Upload and process existing media files
+- **Create with AI Mode**:
+  - Enter text prompts to generate content
+  - Optionally add reference files using the + button
+  - Choose style and quality settings
 - Auto-save to media library
+- **Add to Timeline**: Instantly add generated or uploaded content to your project timeline
 
 ### Movie Library (Page 10)
 - Admin: Upload movies for all users to watch
@@ -223,11 +230,19 @@ The application is production-ready. To deploy:
 - Secure API key handling
 - HTTPS recommended for production
 
+## Documentation
+
+- **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Quick reference for common tasks
+- **[HOW_TO_USE.md](HOW_TO_USE.md)** - Complete user guide with detailed instructions
+- **[DEMO_GUIDE.md](DEMO_GUIDE.md)** - Demo walkthrough
+- **[LIVE_STRIPE_SETUP.md](LIVE_STRIPE_SETUP.md)** - Stripe integration guide
+
 ## Support
 
 For issues or questions:
 - Visit the Community page (Page 19)
 - Use Agent Grok AI assistant
+- Check the [How To Use Guide](HOW_TO_USE.md)
 - Contact: MandaStrong1.Etsy.com
 
 ## Credits

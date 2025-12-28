@@ -14,6 +14,7 @@ export default function ToolWorkspace() {
   const [selectedMode, setSelectedMode] = useState<'upload' | 'create' | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadedMediaId, setUploadedMediaId] = useState<string | null>(null);
+  const [referenceFile, setReferenceFile] = useState<File | null>(null);
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
@@ -28,6 +29,13 @@ export default function ToolWorkspace() {
     if (!file) return;
 
     setUploadedFile(file);
+  };
+
+  const handleReferenceFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setReferenceFile(file);
   };
 
   const handleProcessFile = async () => {
@@ -546,6 +554,48 @@ export default function ToolWorkspace() {
                     Product Photo
                   </button>
                 </div>
+              </div>
+
+              <div className="border-t border-slate-700 pt-6">
+                <label className="block text-white font-semibold mb-3 text-lg flex items-center gap-2">
+                  <Plus className="w-5 h-5 text-purple-400" />
+                  Add Reference File (Optional)
+                </label>
+                <p className="text-sm text-slate-400 mb-4">
+                  Upload an image or video as a reference for the AI to guide generation
+                </p>
+                <input
+                  type="file"
+                  id="reference-file-upload"
+                  className="hidden"
+                  accept="image/*,video/*"
+                  onChange={handleReferenceFileUpload}
+                />
+                {!referenceFile ? (
+                  <label
+                    htmlFor="reference-file-upload"
+                    className="flex items-center justify-center gap-3 w-full px-6 py-4 bg-slate-900/50 border-2 border-dashed border-slate-600 rounded-xl hover:border-purple-500 hover:bg-slate-800/50 transition-all cursor-pointer"
+                  >
+                    <Upload className="w-5 h-5 text-slate-400" />
+                    <span className="text-slate-300 font-medium">Click to upload reference file</span>
+                  </label>
+                ) : (
+                  <div className="flex items-center justify-between px-6 py-4 bg-slate-900/50 border-2 border-purple-500 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="w-5 h-5 text-green-400" />
+                      <span className="text-white font-medium">{referenceFile.name}</span>
+                      <span className="text-sm text-slate-400">
+                        ({(referenceFile.size / 1024 / 1024).toFixed(2)} MB)
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => setReferenceFile(null)}
+                      className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded-lg transition-colors"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="grid md:grid-cols-2 gap-6">
