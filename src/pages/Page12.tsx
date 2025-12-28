@@ -295,10 +295,10 @@ export default function Page12() {
       // Fast progress simulation
       const progressInterval = setInterval(() => {
         setRenderProgress(prev => {
-          if (prev >= 95) return prev;
-          return Math.min(prev + 25, 95);
+          if (prev >= 90) return prev;
+          return Math.min(prev + 15, 90);
         });
-      }, 200);
+      }, 150);
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/render-video`,

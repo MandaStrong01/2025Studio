@@ -80,9 +80,7 @@ Deno.serve(async (req: Request) => {
       return sum + clipDuration;
     }, 0);
 
-    const renderTimeMs = Math.min(Math.max(totalDuration * 100, 2000), 60000);
-    await new Promise(resolve => setTimeout(resolve, renderTimeMs));
-
+    // Fast render - no artificial delays
     let outputUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
 
     if (clips && clips.length > 0) {
