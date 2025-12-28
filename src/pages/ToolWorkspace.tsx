@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Upload, Sparkles, ArrowLeft, CheckCircle, Lock, Plus } from 'lucide-react';
+import { Upload, Sparkles, ArrowLeft, CheckCircle, Lock, Plus, Download, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useProject } from '../contexts/ProjectContext';
@@ -14,6 +14,7 @@ export default function ToolWorkspace() {
   const [selectedMode, setSelectedMode] = useState<'upload' | 'create' | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadedMediaId, setUploadedMediaId] = useState<string | null>(null);
+  const [uploadedFileUrl, setUploadedFileUrl] = useState<string | null>(null);
   const [referenceFiles, setReferenceFiles] = useState<File[]>([]);
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -21,6 +22,7 @@ export default function ToolWorkspace() {
   const [generatedMediaId, setGeneratedMediaId] = useState<string | null>(null);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const hasSubscription = isAdmin || isSubscribed;
 
@@ -50,6 +52,7 @@ export default function ToolWorkspace() {
   const handleProcessFile = async () => {
     if (!uploadedFile || !user) return;
 
+    setIsProcessing(true);
     try {
       const fileExt = uploadedFile.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
@@ -83,6 +86,7 @@ export default function ToolWorkspace() {
 
         if (mediaFile) {
           setUploadedMediaId(mediaFile.id);
+          setUploadedFileUrl(publicUrl);
           setUploadSuccess(true);
         } else {
           alert('File uploaded but failed to save metadata.');
@@ -93,6 +97,8 @@ export default function ToolWorkspace() {
     } catch (error) {
       console.error('Upload error:', error);
       alert('Failed to upload file. Please try again.');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -442,6 +448,14 @@ export default function ToolWorkspace() {
                     <Plus className="w-5 h-5" />
                     Add to Timeline
                   </button>
+                  <a
+                    href={uploadedFileUrl || ''}
+                    download={uploadedFile?.name}
+                    className="flex-1 px-6 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2"
+                  >
+                    <Download className="w-5 h-5" />
+                    Download
+                  </a>
                   <button
                     onClick={() => navigate('/media')}
                     className="flex-1 px-6 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-xl font-bold transition-all"
@@ -452,6 +466,7 @@ export default function ToolWorkspace() {
                     onClick={() => {
                       setUploadedFile(null);
                       setUploadedMediaId(null);
+                      setUploadedFileUrl(null);
                       setUploadSuccess(false);
                     }}
                     className="px-6 py-4 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold transition-colors"
@@ -476,13 +491,22 @@ export default function ToolWorkspace() {
                 <div className="flex gap-4">
                   <button
                     onClick={handleProcessFile}
-                    className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-colors"
+                    disabled={isProcessing}
+                    className="px-8 py-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold transition-colors flex items-center gap-2"
                   >
-                    Process & Upload
+                    {isProcessing ? (
+                      <>
+                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                        Processing...
+                      </>
+                    ) : (
+                      'Process & Upload'
+                    )}
                   </button>
                   <button
                     onClick={() => setUploadedFile(null)}
-                    className="px-8 py-4 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold transition-colors"
+                    disabled={isProcessing}
+                    className="px-8 py-4 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold transition-colors"
                   >
                     Change File
                   </button>
@@ -674,6 +698,14 @@ export default function ToolWorkspace() {
                   <Plus className="w-5 h-5" />
                   Add to Timeline
                 </button>
+                <a
+                  href={generatedContent || ''}
+                  download={`${toolName}-${Date.now()}.${toolName?.toLowerCase().includes('image') ? 'jpg' : 'mp4'}`}
+                  className="flex-1 px-6 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2"
+                >
+                  <Download className="w-5 h-5" />
+                  Download
+                </a>
                 <button
                   onClick={() => navigate('/media')}
                   className="flex-1 px-6 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-xl font-bold transition-all"

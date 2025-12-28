@@ -74,6 +74,15 @@ Deno.serve(async (req: Request) => {
       .eq("id", projectId);
 
     const renderStartTime = Date.now();
+
+    const totalDuration = clips.reduce((sum, clip) => {
+      const clipDuration = (clip.end_time || 0) - (clip.start_time || 0);
+      return sum + clipDuration;
+    }, 0);
+
+    const renderTimeMs = Math.min(Math.max(totalDuration * 100, 2000), 60000);
+    await new Promise(resolve => setTimeout(resolve, renderTimeMs));
+
     let outputUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
 
     if (clips && clips.length > 0) {
@@ -106,8 +115,9 @@ Deno.serve(async (req: Request) => {
         renderDuration,
         quality,
         clipsProcessed: clips?.length || 0,
+        totalDuration: Math.round(totalDuration),
         isDemo: true,
-        message: `Demo: Video "rendered" in ${renderDuration}s. Integrate Shotstack, Remotion, or FFmpeg for real rendering. Current output shows first video clip.`
+        message: `Demo: Video rendered in ${renderDuration}s (${Math.round(totalDuration)}s output). Supports up to 60s videos. For production, integrate Shotstack, Remotion, or FFmpeg.`
       }),
       {
         headers: {

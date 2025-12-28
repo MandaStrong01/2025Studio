@@ -13,6 +13,7 @@ export default function MediaLibrary() {
   const { mediaFiles, addMediaFiles, deleteMediaFile, currentProject } = useProject();
   const [isUploading, setIsUploading] = useState(false);
   const [uploadCount, setUploadCount] = useState(0);
+  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number; currentFile: string }>({ current: 0, total: 0, currentFile: '' });
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const [isDraggingMedia, setIsDraggingMedia] = useState(false);
@@ -63,9 +64,16 @@ export default function MediaLibrary() {
 
     setIsUploading(true);
     setUploadCount(files.length);
+    setUploadProgress({ current: 0, total: files.length, currentFile: '' });
 
     try {
-      const uploadPromises = Array.from(files).map(async (file) => {
+      const filesArray = Array.from(files);
+      const uploadedFiles = [];
+
+      for (let i = 0; i < filesArray.length; i++) {
+        const file = filesArray[i];
+        setUploadProgress({ current: i + 1, total: files.length, currentFile: file.name });
+
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
         const filePath = `${user.id}/${fileName}`;
@@ -76,7 +84,7 @@ export default function MediaLibrary() {
 
         if (error || !data) {
           console.error(`Failed to upload ${file.name}:`, error);
-          return null;
+          continue;
         }
 
         const { data: { publicUrl } } = supabase.storage
@@ -90,7 +98,7 @@ export default function MediaLibrary() {
           duration = await getMediaDuration(file);
         }
 
-        return {
+        uploadedFiles.push({
           user_id: user.id,
           project_id: currentProject?.id || null,
           file_name: file.name,
@@ -99,20 +107,18 @@ export default function MediaLibrary() {
           file_size: file.size,
           duration: Math.round(duration),
           metadata: { originalName: file.name, mimeType: file.type }
-        };
-      });
+        });
+      }
 
-      const uploadedFiles = await Promise.all(uploadPromises);
-      const validFiles = uploadedFiles.filter(f => f !== null);
-
-      if (validFiles.length > 0) {
-        await addMediaFiles(validFiles);
+      if (uploadedFiles.length > 0) {
+        await addMediaFiles(uploadedFiles);
       }
     } catch (error) {
       console.error('Upload failed:', error);
     } finally {
       setIsUploading(false);
       setUploadCount(0);
+      setUploadProgress({ current: 0, total: 0, currentFile: '' });
     }
   };
 
@@ -260,13 +266,20 @@ export default function MediaLibrary() {
       {isUploading && (
         <div className="fixed top-20 right-4 z-50 max-w-sm">
           <div className="bg-blue-900/90 backdrop-blur-xl border border-blue-600 rounded-lg p-4 shadow-lg">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 mb-3">
               <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-400 border-t-transparent"></div>
               <div className="flex-1">
-                <p className="text-white font-semibold text-sm">Uploading {uploadCount} file{uploadCount !== 1 ? 's' : ''}...</p>
-                <p className="text-blue-200 text-xs">Please wait</p>
+                <p className="text-white font-semibold text-sm">Uploading {uploadProgress.current} of {uploadProgress.total}</p>
+                <p className="text-blue-200 text-xs truncate">{uploadProgress.currentFile}</p>
               </div>
             </div>
+            <div className="w-full bg-blue-950 rounded-full h-2">
+              <div
+                className="bg-blue-400 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+              ></div>
+            </div>
+            <p className="text-blue-200 text-xs mt-2 text-right">{Math.round((uploadProgress.current / uploadProgress.total) * 100)}%</p>
           </div>
         </div>
       )}
