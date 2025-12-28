@@ -458,23 +458,6 @@ export default function Page12() {
             </p>
           </div>
           <div className="flex gap-3 items-center">
-            <select
-              value={selectedQuality}
-              onChange={(e) => setSelectedQuality(e.target.value)}
-              className="px-4 py-2 bg-purple-900/50 border border-purple-600/50 rounded-lg text-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500"
-            >
-              <option value="720p">720p (HD)</option>
-              <option value="1080p">1080p (Full HD)</option>
-              <option value="4k">4K (Ultra HD)</option>
-            </select>
-            <button
-              onClick={handleRenderVideo}
-              disabled={isRendering || timelineClips.length === 0}
-              className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Save className="w-4 h-4" />
-              {isRendering ? 'Rendering...' : 'Render Video'}
-            </button>
             <button
               onClick={() => navigate('/media')}
               className="flex items-center gap-2 px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-all"
