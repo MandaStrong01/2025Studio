@@ -62,14 +62,14 @@ export default function Page19() {
           </h1>
           <div className="flex gap-3">
             <button
-              onClick={() => navigate('/collaboration')}
+              onClick={() => navigate('/tos')}
               className="flex items-center gap-2 px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-all"
             >
               <ArrowLeft className="w-4 h-4" />
               Back
             </button>
             <button
-              onClick={() => navigate('/support')}
+              onClick={() => navigate('/community')}
               className="flex items-center gap-2 px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-all"
             >
               Next
