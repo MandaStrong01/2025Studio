@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Play, Pause, Plus, Save, Clock, Upload } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useProject } from '../contexts/ProjectContext';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -27,6 +27,9 @@ export default function Page12() {
   const [draggedClip, setDraggedClip] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadCount, setUploadCount] = useState(0);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [currentTime, setCurrentTime] = useState(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const tracks = [
     { id: 1, name: 'VIDEO 1', type: 'video' },
@@ -143,6 +146,48 @@ export default function Page12() {
     setDraggedClip(null);
   };
 
+  useEffect(() => {
+    if (selectedMedia) {
+      const mediaFile = mediaFiles.find(m => m.id === selectedMedia);
+      if (mediaFile && (mediaFile.file_type === 'video' || mediaFile.file_type === 'image')) {
+        setPreviewUrl(mediaFile.file_url);
+      }
+    }
+  }, [selectedMedia, mediaFiles]);
+
+  useEffect(() => {
+    if (videoRef.current && isPlaying) {
+      videoRef.current.play();
+    } else if (videoRef.current && !isPlaying) {
+      videoRef.current.pause();
+    }
+  }, [isPlaying]);
+
+  const handleTimeUpdate = () => {
+    if (videoRef.current) {
+      setCurrentTime(videoRef.current.currentTime);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const getVideoDuration = (file: File): Promise<number> => {
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.onloadedmetadata = () => {
+        window.URL.revokeObjectURL(video.src);
+        resolve(video.duration);
+      };
+      video.onerror = () => resolve(0);
+      video.src = URL.createObjectURL(file);
+    });
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0 || !user) return;
@@ -184,6 +229,11 @@ export default function Page12() {
 
         const fileType = file.type.split('/')[0];
 
+        let duration = 0;
+        if (fileType === 'video' || fileType === 'audio') {
+          duration = await getVideoDuration(file);
+        }
+
         return {
           user_id: user.id,
           project_id: currentProject?.id || null,
@@ -191,7 +241,7 @@ export default function Page12() {
           file_type: fileType,
           file_url: publicUrl,
           file_size: file.size,
-          duration: 0,
+          duration: Math.round(duration),
           metadata: { originalName: file.name, mimeType: file.type }
         };
       });
@@ -334,22 +384,47 @@ export default function Page12() {
           <div className="flex-1 flex flex-col gap-4">
             <div className="flex-1 bg-white/5 border border-purple-600/30 rounded-lg p-4">
               <div className="h-full bg-black rounded-lg flex items-center justify-center border-2 border-purple-600/20">
-                <div className="text-center">
-                  <div className="w-32 h-32 mx-auto mb-4 bg-purple-600/20 rounded-full flex items-center justify-center">
-                    <Play className="w-16 h-16 text-purple-400" />
+                {previewUrl ? (
+                  <video
+                    ref={videoRef}
+                    src={previewUrl}
+                    className="w-full h-full rounded-lg object-contain"
+                    onTimeUpdate={handleTimeUpdate}
+                    onEnded={() => setIsPlaying(false)}
+                  />
+                ) : (
+                  <div className="text-center">
+                    <div className="w-32 h-32 mx-auto mb-4 bg-purple-600/20 rounded-full flex items-center justify-center">
+                      <Play className="w-16 h-16 text-purple-400" />
+                    </div>
+                    <p className="text-gray-500">Video Preview Window</p>
+                    <p className="text-sm text-gray-600 mt-2">Select a video to preview</p>
                   </div>
-                  <p className="text-gray-500">Video Preview Window</p>
-                  <p className="text-sm text-gray-600 mt-2">1920x1080 • 30fps</p>
-                </div>
+                )}
               </div>
 
-              <div className="mt-4 flex items-center justify-center gap-4">
-                <button
-                  onClick={() => setIsPlaying(!isPlaying)}
-                  className="p-3 bg-purple-600 hover:bg-purple-700 rounded-lg text-white transition-all"
-                >
-                  {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
-                </button>
+              <div className="mt-4 flex flex-col gap-2">
+                {previewUrl && videoRef.current && (
+                  <div className="flex items-center gap-2 text-sm text-gray-400">
+                    <span>{formatTime(currentTime)}</span>
+                    <div className="flex-1 h-2 bg-purple-950/50 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-purple-600 to-purple-400"
+                        style={{ width: `${(currentTime / (videoRef.current.duration || 1)) * 100}%` }}
+                      />
+                    </div>
+                    <span>{formatTime(videoRef.current.duration || 0)}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-center gap-4">
+                  <button
+                    onClick={() => setIsPlaying(!isPlaying)}
+                    disabled={!previewUrl}
+                    className="p-3 bg-purple-600 hover:bg-purple-700 rounded-lg text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+                  </button>
+                </div>
               </div>
             </div>
 

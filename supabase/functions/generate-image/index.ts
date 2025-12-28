@@ -31,7 +31,10 @@ Deno.serve(async (req: Request) => {
       throw new Error("Unauthorized");
     }
 
-    const imageUrl = `https://picsum.photos/seed/${Date.now()}/1024/1024`;
+    // In production, integrate actual AI image generation API (DALL-E, Midjourney, Stable Diffusion)
+    // For now, using random stock photos
+    const seed = prompt ? prompt.split(' ').join('-') : Date.now().toString();
+    const imageUrl = `https://picsum.photos/seed/${seed}/1920/1080`;
     const fileName = `generated-${Date.now()}.jpg`;
 
     const { data: asset, error } = await supabase
@@ -42,7 +45,7 @@ Deno.serve(async (req: Request) => {
         file_name: fileName,
         file_url: imageUrl,
         tool_name: toolName || "Text to Image",
-        metadata: { prompt }
+        metadata: { prompt, isDemo: true }
       })
       .select()
       .single();
@@ -54,7 +57,8 @@ Deno.serve(async (req: Request) => {
         success: true,
         imageUrl,
         asset,
-        message: "Image generated successfully"
+        isDemo: true,
+        message: "Demo: Image generated (stock photo). Integrate DALL-E, Midjourney, or Stable Diffusion for real AI generation."
       }),
       {
         headers: {

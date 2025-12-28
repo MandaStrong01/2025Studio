@@ -13,6 +13,33 @@ export default function Page11() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadCount, setUploadCount] = useState(0);
 
+  const getMediaDuration = (file: File): Promise<number> => {
+    return new Promise((resolve) => {
+      const fileType = file.type.split('/')[0];
+      if (fileType === 'video') {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        video.onloadedmetadata = () => {
+          window.URL.revokeObjectURL(video.src);
+          resolve(video.duration);
+        };
+        video.onerror = () => resolve(0);
+        video.src = URL.createObjectURL(file);
+      } else if (fileType === 'audio') {
+        const audio = document.createElement('audio');
+        audio.preload = 'metadata';
+        audio.onloadedmetadata = () => {
+          window.URL.revokeObjectURL(audio.src);
+          resolve(audio.duration);
+        };
+        audio.onerror = () => resolve(0);
+        audio.src = URL.createObjectURL(file);
+      } else {
+        resolve(0);
+      }
+    });
+  };
+
   const editorFeatures = [
     {
       icon: <Film className="w-12 h-12" />,
@@ -87,6 +114,11 @@ export default function Page11() {
 
         const fileType = file.type.split('/')[0];
 
+        let duration = 0;
+        if (fileType === 'video' || fileType === 'audio') {
+          duration = await getMediaDuration(file);
+        }
+
         return {
           user_id: user.id,
           project_id: currentProject?.id || null,
@@ -94,7 +126,7 @@ export default function Page11() {
           file_type: fileType,
           file_url: publicUrl,
           file_size: file.size,
-          duration: 0,
+          duration: Math.round(duration),
           metadata: { originalName: file.name, mimeType: file.type }
         };
       });

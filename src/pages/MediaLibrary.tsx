@@ -31,6 +31,33 @@ export default function MediaLibrary() {
     }
   }, [user, isInitialLoad]);
 
+  const getMediaDuration = (file: File): Promise<number> => {
+    return new Promise((resolve) => {
+      const fileType = file.type.split('/')[0];
+      if (fileType === 'video') {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        video.onloadedmetadata = () => {
+          window.URL.revokeObjectURL(video.src);
+          resolve(video.duration);
+        };
+        video.onerror = () => resolve(0);
+        video.src = URL.createObjectURL(file);
+      } else if (fileType === 'audio') {
+        const audio = document.createElement('audio');
+        audio.preload = 'metadata';
+        audio.onloadedmetadata = () => {
+          window.URL.revokeObjectURL(audio.src);
+          resolve(audio.duration);
+        };
+        audio.onerror = () => resolve(0);
+        audio.src = URL.createObjectURL(file);
+      } else {
+        resolve(0);
+      }
+    });
+  };
+
   const uploadFiles = async (files: FileList | File[]) => {
     if (!files || files.length === 0 || !user) return;
 
@@ -58,6 +85,11 @@ export default function MediaLibrary() {
 
         const fileType = file.type.split('/')[0];
 
+        let duration = 0;
+        if (fileType === 'video' || fileType === 'audio') {
+          duration = await getMediaDuration(file);
+        }
+
         return {
           user_id: user.id,
           project_id: currentProject?.id || null,
@@ -65,7 +97,7 @@ export default function MediaLibrary() {
           file_type: fileType,
           file_url: publicUrl,
           file_size: file.size,
-          duration: 0,
+          duration: Math.round(duration),
           metadata: { originalName: file.name, mimeType: file.type }
         };
       });

@@ -42,10 +42,33 @@ Deno.serve(async (req: Request) => {
 
     // Support for extended duration videos (up to 10 minutes)
     const maxDuration = Math.min(duration, 600);
-    
-    // In production, this would call actual video generation API
-    // For now, returning sample video with metadata
-    const videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+
+    // In production, this would call actual video generation API (RunwayML, Pika, etc.)
+    // For now, returning sample videos based on keywords/style
+    const sampleVideos = {
+      nature: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+      urban: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+      cinematic: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      fun: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+      joyrides: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
+      meltdowns: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4"
+    };
+
+    // Select video based on style or keywords in prompt
+    let videoUrl = sampleVideos.cinematic;
+    const lowerPrompt = (prompt || '').toLowerCase();
+    const lowerStyle = (style || '').toLowerCase();
+
+    if (lowerStyle.includes('nature') || lowerPrompt.includes('nature') || lowerPrompt.includes('forest') || lowerPrompt.includes('landscape')) {
+      videoUrl = sampleVideos.nature;
+    } else if (lowerStyle.includes('urban') || lowerPrompt.includes('city') || lowerPrompt.includes('urban')) {
+      videoUrl = sampleVideos.urban;
+    } else if (lowerPrompt.includes('fun') || lowerPrompt.includes('comedy')) {
+      videoUrl = sampleVideos.fun;
+    } else if (lowerPrompt.includes('car') || lowerPrompt.includes('drive')) {
+      videoUrl = sampleVideos.joyrides;
+    }
+
     const fileName = `generated-video-${Date.now()}.mp4`;
 
     const metadata = {
@@ -85,9 +108,10 @@ Deno.serve(async (req: Request) => {
         asset,
         duration: maxDuration,
         lipSyncEnabled: lipSync,
-        message: lipSync 
-          ? "Lip sync video generated successfully" 
-          : "Video generated successfully"
+        isDemo: true,
+        message: lipSync
+          ? "Demo: Lip sync video generated (sample video). Integrate RunwayML or Pika AI for real generation."
+          : "Demo: Video generated successfully (sample video). Integrate RunwayML or Pika AI for real generation."
       }),
       {
         headers: {
