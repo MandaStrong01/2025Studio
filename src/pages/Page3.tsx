@@ -84,12 +84,10 @@ export default function Page3() {
         return;
       }
 
-      // TODO: Replace with your LIVE Stripe Price IDs from https://dashboard.stripe.com/products
-      // These should look like: price_1ABC123xyz... (not 'price_basic')
       const priceIds: Record<string, string> = {
-        basic: 'price_basic',    // Replace with your Basic plan price ID
-        pro: 'price_pro',        // Replace with your Pro plan price ID
-        studio: 'price_studio'   // Replace with your Studio plan price ID
+        basic: import.meta.env.VITE_STRIPE_PRICE_BASIC || 'price_basic',
+        pro: import.meta.env.VITE_STRIPE_PRICE_PRO || 'price_pro',
+        studio: import.meta.env.VITE_STRIPE_PRICE_STUDIO || 'price_studio'
       };
 
       const checkoutResponse = await fetch(

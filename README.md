@@ -84,6 +84,11 @@ npm install
 ```
 VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# Stripe Price IDs (get from https://dashboard.stripe.com/products)
+VITE_STRIPE_PRICE_BASIC=price_1ABC123xyz...
+VITE_STRIPE_PRICE_PRO=price_2DEF456xyz...
+VITE_STRIPE_PRICE_STUDIO=price_3GHI789xyz...
 ```
 
 4. Place video files in `public/static/video/`:
@@ -187,10 +192,20 @@ Place these files in `public/static/video/`:
 
 ## Stripe Integration
 
-Configure Stripe checkout URLs in Page 3:
-- Basic plan: ends with `00`
-- Pro plan: ends with `01`
-- Studio plan: ends with `02`
+### Quick Setup
+
+1. **Get Stripe API Keys**: Visit https://dashboard.stripe.com/apikeys
+2. **Create Products**: Set up 3 subscription products in Stripe Dashboard
+3. **Configure Supabase Secrets**: Add `STRIPE_SECRET_KEY` to Supabase Edge Functions
+4. **Update .env**: Add your 3 Price IDs to the `.env` file
+5. **Rebuild**: Run `npm run build`
+
+For detailed instructions, see [LIVE_STRIPE_SETUP.md](LIVE_STRIPE_SETUP.md)
+
+### How It Works
+
+- With Stripe configured: Users are redirected to Stripe checkout for payment
+- Without Stripe: System automatically activates subscriptions (development mode)
 
 ## Deployment
 
