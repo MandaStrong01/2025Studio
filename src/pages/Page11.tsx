@@ -8,9 +8,10 @@ import EditorNav from '../components/EditorNav';
 
 export default function Page11() {
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
-  const { movieDuration, setMovieDuration } = useProject();
-  const [showUpload, setShowUpload] = useState(false);
+  const { user } = useAuth();
+  const { movieDuration, setMovieDuration, addMediaFiles, currentProject } = useProject();
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadCount, setUploadCount] = useState(0);
 
   const editorFeatures = [
     {
@@ -47,36 +48,59 @@ export default function Page11() {
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0 || !user) return;
 
-    const uploadedFiles: string[] = [];
+    setIsUploading(true);
+    setUploadCount(files.length);
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const filePath = `media/${fileName}`;
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `${user.id}/${fileName}`;
 
-      const { data, error } = await supabase.storage
-        .from('media')
-        .upload(filePath, file);
+        const { data, error } = await supabase.storage
+          .from('media')
+          .upload(filePath, file);
 
-      if (!error && data) {
+        if (error || !data) {
+          console.error(`Failed to upload ${file.name}:`, error);
+          return null;
+        }
+
         const { data: { publicUrl } } = supabase.storage
           .from('media')
           .getPublicUrl(filePath);
 
-        uploadedFiles.push(publicUrl);
+        const fileType = file.type.split('/')[0];
+
+        return {
+          user_id: user.id,
+          project_id: currentProject?.id || null,
+          file_name: file.name,
+          file_type: fileType,
+          file_url: publicUrl,
+          file_size: file.size,
+          duration: 0,
+          metadata: { originalName: file.name, mimeType: file.type }
+        };
+      });
+
+      const uploadedFiles = await Promise.all(uploadPromises);
+      const validFiles = uploadedFiles.filter(f => f !== null);
+
+      if (validFiles.length > 0) {
+        await addMediaFiles(validFiles);
+        navigate('/media-library');
       }
+    } catch (error) {
+      console.error('Upload failed:', error);
+    } finally {
+      setIsUploading(false);
+      setUploadCount(0);
     }
 
     e.target.value = '';
-    setShowUpload(false);
-
-    if (uploadedFiles.length > 0) {
-      alert(`Successfully uploaded ${uploadedFiles.length} file(s)`);
-      navigate('/media-library');
-    }
   };
 
   return (
@@ -93,32 +117,19 @@ export default function Page11() {
             <ArrowLeft className="w-4 h-4" />
             My Projects
           </button>
-          {isAdmin && (
-            <button
-              onClick={() => setShowUpload(!showUpload)}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-sm font-semibold transition-all flex items-center gap-2"
-            >
-              <Upload className="w-4 h-4" />
-              Admin Upload
-            </button>
-          )}
+          <label className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white text-sm font-semibold transition-all flex items-center gap-2 cursor-pointer">
+            <Upload className="w-4 h-4" />
+            {isUploading ? `Uploading ${uploadCount}...` : 'Upload Media'}
+            <input
+              type="file"
+              multiple
+              accept="image/*,video/*,audio/*"
+              onChange={handleFileUpload}
+              className="hidden"
+              disabled={isUploading}
+            />
+          </label>
         </div>
-
-        {showUpload && isAdmin && (
-          <div className="mb-6 bg-purple-900/30 border border-purple-600/50 rounded-lg p-4">
-            <label className="cursor-pointer flex items-center gap-3">
-              <Upload className="w-5 h-5 text-purple-400" />
-              <span className="text-white">Upload Movies (Admin Only)</span>
-              <input
-                type="file"
-                multiple
-                accept="video/*"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-            </label>
-          </div>
-        )}
 
         <div className="text-center mb-12">
           <h1 className="text-7xl font-black text-transparent bg-gradient-to-r from-purple-400 via-purple-500 to-purple-600 bg-clip-text mb-4">

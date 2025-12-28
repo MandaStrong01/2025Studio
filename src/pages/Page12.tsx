@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Play, Pause, Plus, Save, Clock } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Play, Pause, Plus, Save, Clock, Upload } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useProject } from '../contexts/ProjectContext';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 import EditorNav from '../components/EditorNav';
 
 export default function Page12() {
@@ -13,6 +14,7 @@ export default function Page12() {
     mediaFiles,
     timelineClips,
     addTimelineClip,
+    addMediaFiles,
     movieDuration,
     setMovieDuration
   } = useProject();
@@ -23,6 +25,8 @@ export default function Page12() {
   const [draggedMedia, setDraggedMedia] = useState<string | null>(null);
   const [dragOverTrack, setDragOverTrack] = useState<number | null>(null);
   const [draggedClip, setDraggedClip] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadCount, setUploadCount] = useState(0);
 
   const tracks = [
     { id: 1, name: 'VIDEO 1', type: 'video' },
@@ -139,6 +143,62 @@ export default function Page12() {
     setDraggedClip(null);
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !user) return;
+
+    setIsUploading(true);
+    setUploadCount(files.length);
+
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `${user.id}/${fileName}`;
+
+        const { data, error } = await supabase.storage
+          .from('media')
+          .upload(filePath, file);
+
+        if (error || !data) {
+          console.error(`Failed to upload ${file.name}:`, error);
+          return null;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('media')
+          .getPublicUrl(filePath);
+
+        const fileType = file.type.split('/')[0];
+
+        return {
+          user_id: user.id,
+          project_id: currentProject?.id || null,
+          file_name: file.name,
+          file_type: fileType,
+          file_url: publicUrl,
+          file_size: file.size,
+          duration: 0,
+          metadata: { originalName: file.name, mimeType: file.type }
+        };
+      });
+
+      const uploadedFiles = await Promise.all(uploadPromises);
+      const validFiles = uploadedFiles.filter(f => f !== null);
+
+      if (validFiles.length > 0) {
+        await addMediaFiles(validFiles);
+      }
+    } catch (error) {
+      console.error('Upload failed:', error);
+    } finally {
+      setIsUploading(false);
+      setUploadCount(0);
+    }
+
+    e.target.value = '';
+  };
+
   return (
     <div className="min-h-screen bg-black">
       <EditorNav />
@@ -195,16 +255,38 @@ export default function Page12() {
 
         <div className="flex-1 flex gap-4 overflow-hidden">
           <div className="w-64 bg-white/5 border border-purple-600/30 rounded-lg p-4 overflow-y-auto">
-            <h2 className="text-lg font-bold text-purple-400 mb-4">MEDIA LIBRARY</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-purple-400">MEDIA LIBRARY</h2>
+              <label className="cursor-pointer">
+                <Upload className="w-4 h-4 text-blue-400 hover:text-blue-300 transition-colors" />
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*,video/*,audio/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  disabled={isUploading}
+                />
+              </label>
+            </div>
+            {isUploading && (
+              <div className="mb-3 text-xs text-purple-400 text-center animate-pulse">
+                Uploading {uploadCount} file(s)...
+              </div>
+            )}
             {mediaFiles.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-sm text-gray-500 mb-3">No media files</p>
-                <button
-                  onClick={() => navigate('/media')}
-                  className="px-3 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-xs text-white transition-all"
-                >
+                <label className="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-xs text-white transition-all cursor-pointer inline-block">
                   Upload Files
-                </button>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*,video/*,audio/*"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                </label>
               </div>
             ) : (
               <div className="space-y-2">
