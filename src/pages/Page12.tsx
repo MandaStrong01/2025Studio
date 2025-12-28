@@ -30,6 +30,11 @@ export default function Page12() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [isRendering, setIsRendering] = useState(false);
+  const [renderProgress, setRenderProgress] = useState(0);
+  const [renderError, setRenderError] = useState<string | null>(null);
+  const [showRenderModal, setShowRenderModal] = useState(false);
+  const [selectedQuality, setSelectedQuality] = useState('1080p');
 
   const tracks = [
     { id: 1, name: 'VIDEO 1', type: 'video' },
@@ -267,6 +272,87 @@ export default function Page12() {
     e.target.value = '';
   };
 
+  const handleRenderVideo = async () => {
+    if (!currentProject) {
+      alert('No project selected');
+      return;
+    }
+
+    if (timelineClips.length === 0) {
+      alert('Add at least one clip to the timeline before rendering');
+      return;
+    }
+
+    setIsRendering(true);
+    setRenderProgress(0);
+    setRenderError(null);
+    setShowRenderModal(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      // Simulate progress updates
+      const progressInterval = setInterval(() => {
+        setRenderProgress(prev => {
+          if (prev >= 90) return prev;
+          return prev + Math.random() * 15;
+        });
+      }, 500);
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/render-video`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            projectId: currentProject.id,
+            quality: selectedQuality
+          })
+        }
+      );
+
+      clearInterval(progressInterval);
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Render failed');
+      }
+
+      const result = await response.json();
+      setRenderProgress(100);
+
+      // Refresh project to get updated output_url
+      const { data: projects } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('id', currentProject.id)
+        .single();
+
+      if (projects) {
+        // Update currentProject context would go here
+        setTimeout(() => {
+          alert(`Video rendered successfully! ${result.isDemo ? '\n\nNote: This is a demo render. Integrate Shotstack or FFmpeg for real rendering.' : ''}`);
+          setIsRendering(false);
+          setShowRenderModal(false);
+        }, 1000);
+      }
+    } catch (error: any) {
+      console.error('Render error:', error);
+      setRenderError(error.message);
+      setIsRendering(false);
+    }
+  };
+
+  const downloadRenderedVideo = () => {
+    if (currentProject?.output_url) {
+      window.open(currentProject.output_url, '_blank');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black">
       <EditorNav />
@@ -295,6 +381,76 @@ export default function Page12() {
           </div>
         </div>
       )}
+
+      {showRenderModal && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-purple-900 to-black border-2 border-purple-600 rounded-2xl p-8 max-w-lg w-full">
+            <h2 className="text-3xl font-bold text-white mb-4">
+              {isRendering ? 'Rendering Video...' : renderError ? 'Render Failed' : 'Render Complete!'}
+            </h2>
+
+            {isRendering && (
+              <>
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-gray-300">Progress</span>
+                    <span className="text-purple-400 font-bold">{Math.round(renderProgress)}%</span>
+                  </div>
+                  <div className="w-full h-3 bg-gray-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-purple-600 to-blue-500 transition-all duration-300"
+                      style={{ width: `${renderProgress}%` }}
+                    />
+                  </div>
+                </div>
+                <p className="text-gray-400 text-sm mb-4">
+                  Processing {timelineClips.length} clips at {selectedQuality} quality...
+                </p>
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-purple-400 border-t-transparent"></div>
+                </div>
+              </>
+            )}
+
+            {renderError && (
+              <>
+                <p className="text-red-400 mb-6">{renderError}</p>
+                <button
+                  onClick={() => {
+                    setShowRenderModal(false);
+                    setRenderError(null);
+                  }}
+                  className="w-full px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-lg transition-all"
+                >
+                  Close
+                </button>
+              </>
+            )}
+
+            {!isRendering && !renderError && renderProgress === 100 && (
+              <>
+                <p className="text-gray-300 mb-6">
+                  Your video has been rendered successfully and is ready to download!
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowRenderModal(false)}
+                    className="flex-1 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-lg transition-all"
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={downloadRenderedVideo}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold rounded-lg transition-all"
+                  >
+                    Download Video
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
       <div className="h-screen flex flex-col">
         <div className="flex items-center justify-between mb-4 px-4 py-3 bg-white/5 border border-purple-600/30 rounded-lg">
           <div>
@@ -303,7 +459,24 @@ export default function Page12() {
               {currentProject ? currentProject.project_name : 'New Session'}
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 items-center">
+            <select
+              value={selectedQuality}
+              onChange={(e) => setSelectedQuality(e.target.value)}
+              className="px-4 py-2 bg-purple-900/50 border border-purple-600/50 rounded-lg text-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500"
+            >
+              <option value="720p">720p (HD)</option>
+              <option value="1080p">1080p (Full HD)</option>
+              <option value="4k">4K (Ultra HD)</option>
+            </select>
+            <button
+              onClick={handleRenderVideo}
+              disabled={isRendering || timelineClips.length === 0}
+              className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Save className="w-4 h-4" />
+              {isRendering ? 'Rendering...' : 'Render Video'}
+            </button>
             <button
               onClick={() => navigate('/media')}
               className="flex items-center gap-2 px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-all"
@@ -431,10 +604,19 @@ export default function Page12() {
             <div className="h-80 bg-white/5 border border-purple-600/30 rounded-lg p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-bold text-purple-400">MULTI-TRACK TIMELINE</h3>
-                <div className="flex gap-2 items-center">
+                <div className="flex gap-3 items-center">
                   <span className="text-xs text-gray-400">
                     {timelineClips.length} clips
                   </span>
+                  {currentProject?.render_status === 'completed' && currentProject?.output_url && (
+                    <button
+                      onClick={downloadRenderedVideo}
+                      className="flex items-center gap-1 px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-xs text-white font-bold transition-all"
+                    >
+                      <Save className="w-3 h-3" />
+                      Download Rendered
+                    </button>
+                  )}
                   {saving && (
                     <div className="flex items-center gap-2 text-xs text-purple-400">
                       <Save className="w-3 h-3 animate-pulse" />
