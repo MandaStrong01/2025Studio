@@ -109,8 +109,11 @@ export default function Page3() {
       const checkoutResult = await checkoutResponse.json();
 
       if (!checkoutResponse.ok) {
-        if (checkoutResult.status === 'not_configured' || checkoutResult.error?.includes('Stripe not configured')) {
-          console.log('Stripe not configured, activating subscription directly...');
+        if (checkoutResult.status === 'not_configured' ||
+            checkoutResult.error?.includes('Stripe not configured') ||
+            checkoutResult.error?.includes('No such price') ||
+            checkoutResult.details?.includes('No such price')) {
+          console.log('Stripe not configured or invalid price IDs, activating subscription directly...');
 
           const activateResponse = await fetch(
             `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/activate-subscription`,
