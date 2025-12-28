@@ -147,8 +147,20 @@ export default function Page12() {
     const files = e.target.files;
     if (!files || files.length === 0 || !user) return;
 
+    const MAX_FILE_SIZE = 50 * 1024 * 1024;
+    const oversizedFiles = Array.from(files).filter(f => f.size > MAX_FILE_SIZE);
+
+    if (oversizedFiles.length > 0) {
+      const fileList = oversizedFiles.map(f => `${f.name} (${(f.size / 1024 / 1024).toFixed(1)}MB)`).join('\n');
+      alert(`The following files exceed the 50MB limit:\n\n${fileList}\n\nPlease use smaller files or compress them first.`);
+      e.target.value = '';
+      return;
+    }
+
     setIsUploading(true);
     setUploadCount(files.length);
+
+    const errors: string[] = [];
 
     try {
       const uploadPromises = Array.from(files).map(async (file) => {
@@ -162,6 +174,7 @@ export default function Page12() {
 
         if (error || !data) {
           console.error(`Failed to upload ${file.name}:`, error);
+          errors.push(`${file.name}: ${error?.message || 'Unknown error'}`);
           return null;
         }
 
@@ -189,8 +202,13 @@ export default function Page12() {
       if (validFiles.length > 0) {
         await addMediaFiles(validFiles);
       }
+
+      if (errors.length > 0) {
+        alert(`Some files failed to upload:\n\n${errors.join('\n')}`);
+      }
     } catch (error) {
       console.error('Upload failed:', error);
+      alert('Upload failed. Please try again.');
     } finally {
       setIsUploading(false);
       setUploadCount(0);
