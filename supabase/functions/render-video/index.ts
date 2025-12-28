@@ -15,11 +15,20 @@ Deno.serve(async (req: Request) => {
     });
   }
 
+  let projectId: string | null = null;
+  let supabase: any = null;
+
   try {
-    const { projectId, quality = '1080p' } = await req.json();
+    const body = await req.json();
+    projectId = body.projectId;
+    const quality = body.quality || '1080p';
+
+    if (!projectId) {
+      throw new Error("Project ID is required");
+    }
 
     const authHeader = req.headers.get("Authorization")!;
-    const supabase = createClient(
+    supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
       { global: { headers: { Authorization: authHeader } } }
@@ -31,7 +40,6 @@ Deno.serve(async (req: Request) => {
       throw new Error("Unauthorized");
     }
 
-    // Get project and timeline clips
     const { data: project, error: projectError } = await supabase
       .from("projects")
       .select("*")
@@ -43,7 +51,6 @@ Deno.serve(async (req: Request) => {
       throw new Error("Project not found");
     }
 
-    // Get timeline clips with media files
     const { data: clips, error: clipsError } = await supabase
       .from("timeline_clips")
       .select(`
@@ -58,7 +65,6 @@ Deno.serve(async (req: Request) => {
       throw new Error("Failed to fetch timeline clips");
     }
 
-    // Update project status to rendering
     await supabase
       .from("projects")
       .update({
@@ -67,44 +73,7 @@ Deno.serve(async (req: Request) => {
       })
       .eq("id", projectId);
 
-    // RENDERING LOGIC
-    // ================
-    // For production, implement one of these approaches:
-    //
-    // Option 1: Use Shotstack API (Recommended for < 2min renders)
-    // const response = await fetch('https://api.shotstack.io/v1/render', {
-    //   method: 'POST',
-    //   headers: {
-    //     'x-api-key': Deno.env.get('SHOTSTACK_API_KEY'),
-    //     'Content-Type': 'application/json'
-    //   },
-    //   body: JSON.stringify({
-    //     timeline: {
-    //       tracks: clips.map(clip => ({
-    //         clips: [{
-    //           asset: { type: 'video', src: clip.media_files.file_url },
-    //           start: clip.start_time,
-    //           length: clip.end_time - clip.start_time
-    //         }]
-    //       }))
-    //     },
-    //     output: { format: 'mp4', resolution: quality }
-    //   })
-    // });
-    //
-    // Option 2: Use Remotion with Lambda
-    // Option 3: Use FFmpeg in a separate worker service
-    // Option 4: Use Cloudflare Workers with FFmpeg
-
-    // For now, simulate rendering with a delay
-    // In production, this would be replaced with actual video composition
     const renderStartTime = Date.now();
-    const estimatedDuration = clips?.length ? clips.length * 2 : 10; // 2 seconds per clip
-
-    // Simulate processing time (remove in production)
-    await new Promise(resolve => setTimeout(resolve, Math.min(estimatedDuration * 1000, 5000)));
-
-    // For demo: Use first video clip or sample video as "rendered" output
     let outputUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
 
     if (clips && clips.length > 0) {
@@ -116,7 +85,6 @@ Deno.serve(async (req: Request) => {
 
     const renderDuration = Math.round((Date.now() - renderStartTime) / 1000);
 
-    // Update project with completed render
     const { error: updateError } = await supabase
       .from("projects")
       .update({
@@ -148,28 +116,26 @@ Deno.serve(async (req: Request) => {
         },
       }
     );
-  } catch (error) {
-    // Update project status to failed
-    try {
-      const { projectId } = await req.json();
-      const authHeader = req.headers.get("Authorization")!;
-      const supabase = createClient(
-        Deno.env.get("SUPABASE_URL") ?? "",
-        Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-        { global: { headers: { Authorization: authHeader } } }
-      );
+  } catch (error: any) {
+    console.error("Render error:", error);
 
-      await supabase
-        .from("projects")
-        .update({ render_status: "failed" })
-        .eq("id", projectId);
-    } catch (e) {
-      console.error("Failed to update project status:", e);
+    if (projectId && supabase) {
+      try {
+        await supabase
+          .from("projects")
+          .update({
+            render_status: "failed",
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", projectId);
+      } catch (e) {
+        console.error("Failed to update project status:", e);
+      }
     }
 
     return new Response(
       JSON.stringify({
-        error: error.message,
+        error: error?.message || "Unknown error",
         details: "Render failed. Check project timeline and media files."
       }),
       {

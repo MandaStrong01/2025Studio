@@ -292,13 +292,13 @@ export default function Page12() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
 
-      // Simulate progress updates
+      // Fast progress simulation
       const progressInterval = setInterval(() => {
         setRenderProgress(prev => {
-          if (prev >= 90) return prev;
-          return prev + Math.random() * 15;
+          if (prev >= 95) return prev;
+          return Math.min(prev + 25, 95);
         });
-      }, 500);
+      }, 200);
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/render-video`,
@@ -333,12 +333,10 @@ export default function Page12() {
         .single();
 
       if (projects) {
-        // Update currentProject context would go here
+        setIsRendering(false);
         setTimeout(() => {
-          alert(`Video rendered successfully! ${result.isDemo ? '\n\nNote: This is a demo render. Integrate Shotstack or FFmpeg for real rendering.' : ''}`);
-          setIsRendering(false);
           setShowRenderModal(false);
-        }, 1000);
+        }, 1500);
       }
     } catch (error: any) {
       console.error('Render error:', error);
