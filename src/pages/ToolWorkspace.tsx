@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Upload, Sparkles, ArrowLeft, CheckCircle, Lock } from 'lucide-react';
+import { Upload, Sparkles, ArrowLeft, CheckCircle, Lock, Plus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useProject } from '../contexts/ProjectContext';
@@ -13,10 +13,13 @@ export default function ToolWorkspace() {
   const { addMediaFile, currentProject } = useProject();
   const [selectedMode, setSelectedMode] = useState<'upload' | 'create' | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploadedMediaId, setUploadedMediaId] = useState<string | null>(null);
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
+  const [generatedMediaId, setGeneratedMediaId] = useState<string | null>(null);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
 
   const hasSubscription = isAdmin || isSubscribed;
 
@@ -62,8 +65,8 @@ export default function ToolWorkspace() {
         });
 
         if (mediaFile) {
-          alert('File uploaded successfully!');
-          navigate('/media-library');
+          setUploadedMediaId(mediaFile.id);
+          setUploadSuccess(true);
         } else {
           alert('File uploaded but failed to save metadata.');
         }
@@ -73,6 +76,46 @@ export default function ToolWorkspace() {
     } catch (error) {
       console.error('Upload error:', error);
       alert('Failed to upload file. Please try again.');
+    }
+  };
+
+  const handleAddUploadedToTimeline = async () => {
+    if (!currentProject || !uploadedMediaId) {
+      alert('No project selected or media not found');
+      return;
+    }
+
+    try {
+      const { data: mediaFile } = await supabase
+        .from('media_files')
+        .select('*')
+        .eq('id', uploadedMediaId)
+        .single();
+
+      if (!mediaFile) {
+        alert('Media file not found');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('timeline_clips')
+        .insert({
+          project_id: currentProject.id,
+          media_file_id: mediaFile.id,
+          start_time: 0,
+          end_time: mediaFile.duration || 5,
+          track_number: 1,
+        });
+
+      if (!error) {
+        alert('Added to timeline! Go to Timeline Editor to see it.');
+        navigate('/page12');
+      } else {
+        alert('Failed to add to timeline');
+      }
+    } catch (error) {
+      console.error('Add to timeline error:', error);
+      alert('Failed to add to timeline');
     }
   };
 
@@ -90,6 +133,46 @@ export default function ToolWorkspace() {
     }
 
     setSelectedMode('create');
+  };
+
+  const handleAddToTimeline = async () => {
+    if (!currentProject || !generatedMediaId) {
+      alert('No project selected or media not found');
+      return;
+    }
+
+    try {
+      const { data: mediaFile } = await supabase
+        .from('media_files')
+        .select('*')
+        .eq('id', generatedMediaId)
+        .single();
+
+      if (!mediaFile) {
+        alert('Media file not found');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('timeline_clips')
+        .insert({
+          project_id: currentProject.id,
+          media_file_id: mediaFile.id,
+          start_time: 0,
+          end_time: mediaFile.duration || 5,
+          track_number: 1,
+        });
+
+      if (!error) {
+        alert('Added to timeline! Go to Timeline Editor to see it.');
+        navigate('/page12');
+      } else {
+        alert('Failed to add to timeline');
+      }
+    } catch (error) {
+      console.error('Add to timeline error:', error);
+      alert('Failed to add to timeline');
+    }
   };
 
   const handleGenerate = async () => {
@@ -139,7 +222,7 @@ export default function ToolWorkspace() {
         const fileType = isImage ? 'image' : 'video';
         const fileName = `AI-Generated-${toolName?.replace(/-/g, '-')}-${Date.now()}.${isImage ? 'png' : 'mp4'}`;
 
-        await addMediaFile({
+        const mediaFile = await addMediaFile({
           user_id: user.id,
           project_id: currentProject?.id || null,
           file_name: fileName,
@@ -154,6 +237,10 @@ export default function ToolWorkspace() {
             generatedAt: new Date().toISOString()
           }
         });
+
+        if (mediaFile) {
+          setGeneratedMediaId(mediaFile.id);
+        }
       } else {
         alert('Generation failed. Please try again.');
       }
@@ -312,6 +399,50 @@ export default function ToolWorkspace() {
                   </p>
                 </div>
               </label>
+            ) : uploadSuccess ? (
+              <div className="flex flex-col items-center space-y-6">
+                <div className="bg-green-500/20 border border-green-500 rounded-xl p-6 flex items-center gap-3 mb-4">
+                  <CheckCircle className="w-6 h-6 text-green-400" />
+                  <p className="text-white font-semibold">File uploaded successfully!</p>
+                </div>
+                <div className="w-32 h-32 bg-green-500/20 rounded-full flex items-center justify-center">
+                  <CheckCircle size={64} className="text-green-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-semibold text-white mb-2">
+                    {uploadedFile.name}
+                  </p>
+                  <p className="text-slate-400">
+                    File uploaded to your media library
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-4 w-full max-w-2xl">
+                  <button
+                    onClick={handleAddUploadedToTimeline}
+                    disabled={!currentProject}
+                    className="flex-1 px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2"
+                  >
+                    <Plus className="w-5 h-5" />
+                    Add to Timeline
+                  </button>
+                  <button
+                    onClick={() => navigate('/media')}
+                    className="flex-1 px-6 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-xl font-bold transition-all"
+                  >
+                    View in Media Library
+                  </button>
+                  <button
+                    onClick={() => {
+                      setUploadedFile(null);
+                      setUploadedMediaId(null);
+                      setUploadSuccess(false);
+                    }}
+                    className="px-6 py-4 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold transition-colors"
+                  >
+                    Upload Another
+                  </button>
+                </div>
+              </div>
             ) : (
               <div className="flex flex-col items-center space-y-6">
                 <div className="w-32 h-32 bg-green-500/20 rounded-full flex items-center justify-center">
@@ -328,13 +459,13 @@ export default function ToolWorkspace() {
                 <div className="flex gap-4">
                   <button
                     onClick={handleProcessFile}
-                    className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors"
+                    className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-colors"
                   >
                     Process & Upload
                   </button>
                   <button
                     onClick={() => setUploadedFile(null)}
-                    className="px-8 py-4 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-semibold transition-colors"
+                    className="px-8 py-4 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold transition-colors"
                   >
                     Change File
                   </button>
@@ -467,21 +598,30 @@ export default function ToolWorkspace() {
                 )}
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-4">
                 <button
-                  onClick={() => {
-                    setGeneratedContent(null);
-                    setPrompt('');
-                  }}
-                  className="flex-1 px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-semibold transition-colors"
+                  onClick={handleAddToTimeline}
+                  disabled={!currentProject}
+                  className="flex-1 px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2"
                 >
-                  Generate Another
+                  <Plus className="w-5 h-5" />
+                  Add to Timeline
                 </button>
                 <button
                   onClick={() => navigate('/media')}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-xl font-semibold transition-all"
+                  className="flex-1 px-6 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-xl font-bold transition-all"
                 >
                   View in Media Library
+                </button>
+                <button
+                  onClick={() => {
+                    setGeneratedContent(null);
+                    setGeneratedMediaId(null);
+                    setPrompt('');
+                  }}
+                  className="px-6 py-4 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold transition-colors"
+                >
+                  Generate Another
                 </button>
               </div>
             </div>
