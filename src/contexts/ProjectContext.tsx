@@ -57,6 +57,7 @@ interface ProjectContextType {
   loadMediaFiles: () => Promise<void>;
   addMediaFile: (file: Omit<MediaFile, 'id' | 'created_at'>) => Promise<MediaFile | null>;
   addMediaFiles: (files: Omit<MediaFile, 'id' | 'created_at'>[]) => Promise<MediaFile[]>;
+  deleteMediaFile: (fileId: string, fileUrl: string) => Promise<void>;
   addTimelineClip: (clip: Omit<TimelineClip, 'id' | 'created_at'>) => Promise<TimelineClip | null>;
   updateTimelineClip: (clipId: string, updates: Partial<TimelineClip>) => Promise<void>;
   deleteTimelineClip: (clipId: string) => Promise<void>;
@@ -213,6 +214,26 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     return [];
   };
 
+  const deleteMediaFile = async (fileId: string, fileUrl: string) => {
+    if (!user) return;
+
+    const filePath = fileUrl.split('/').slice(-2).join('/');
+
+    await supabase.storage
+      .from('media')
+      .remove([filePath]);
+
+    const { error } = await supabase
+      .from('media_files')
+      .delete()
+      .eq('id', fileId)
+      .eq('user_id', user.id);
+
+    if (!error) {
+      setMediaFiles(mediaFiles.filter(f => f.id !== fileId));
+    }
+  };
+
   const addTimelineClip = async (clip: Omit<TimelineClip, 'id' | 'created_at'>) => {
     if (!user) return null;
 
@@ -318,6 +339,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     loadMediaFiles,
     addMediaFile,
     addMediaFiles,
+    deleteMediaFile,
     addTimelineClip,
     updateTimelineClip,
     deleteTimelineClip

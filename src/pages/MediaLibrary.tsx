@@ -10,7 +10,7 @@ import MediaSkeleton from '../components/MediaSkeleton';
 export default function MediaLibrary() {
   const navigate = useNavigate();
   const { user, isAdmin } = useAuth();
-  const { mediaFiles, addMediaFiles, currentProject } = useProject();
+  const { mediaFiles, addMediaFiles, deleteMediaFile, currentProject } = useProject();
   const [isUploading, setIsUploading] = useState(false);
   const [uploadCount, setUploadCount] = useState(0);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -41,7 +41,7 @@ export default function MediaLibrary() {
       const uploadPromises = Array.from(files).map(async (file) => {
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const filePath = `media/${fileName}`;
+        const filePath = `${user.id}/${fileName}`;
 
         const { data, error } = await supabase.storage
           .from('media')
@@ -194,6 +194,12 @@ export default function MediaLibrary() {
         startTime: timelineItems.length * 3,
         duration: 3
       }]);
+    }
+  };
+
+  const handleDeleteFile = async (fileId: string, fileUrl: string) => {
+    if (window.confirm('Are you sure you want to delete this file?')) {
+      await deleteMediaFile(fileId, fileUrl);
     }
   };
 
@@ -457,7 +463,10 @@ export default function MediaLibrary() {
                   </a>
                   <button
                     className="p-2 bg-red-600 hover:bg-red-700 rounded-lg text-white transition-all"
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteFile(file.id, file.file_url);
+                    }}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
