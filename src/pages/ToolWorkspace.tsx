@@ -14,7 +14,7 @@ export default function ToolWorkspace() {
   const [selectedMode, setSelectedMode] = useState<'upload' | 'create' | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadedMediaId, setUploadedMediaId] = useState<string | null>(null);
-  const [referenceFile, setReferenceFile] = useState<File | null>(null);
+  const [referenceFiles, setReferenceFiles] = useState<File[]>([]);
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
@@ -32,10 +32,19 @@ export default function ToolWorkspace() {
   };
 
   const handleReferenceFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    setReferenceFile(file);
+    const newFiles = Array.from(files);
+    setReferenceFiles(prev => [...prev, ...newFiles]);
+
+    if (e.target) {
+      e.target.value = '';
+    }
+  };
+
+  const removeReferenceFile = (index: number) => {
+    setReferenceFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleProcessFile = async () => {
@@ -559,41 +568,49 @@ export default function ToolWorkspace() {
               <div className="border-t border-slate-700 pt-6">
                 <label className="block text-white font-semibold mb-3 text-lg flex items-center gap-2">
                   <Plus className="w-5 h-5 text-purple-400" />
-                  Add Reference File (Optional)
+                  Add Reference Files (Optional)
                 </label>
                 <p className="text-sm text-slate-400 mb-4">
-                  Upload an image or video as a reference for the AI to guide generation
+                  Upload multiple images or videos as references for the AI to guide generation
                 </p>
                 <input
                   type="file"
                   id="reference-file-upload"
                   className="hidden"
                   accept="image/*,video/*"
+                  multiple
                   onChange={handleReferenceFileUpload}
                 />
-                {!referenceFile ? (
-                  <label
-                    htmlFor="reference-file-upload"
-                    className="flex items-center justify-center gap-3 w-full px-6 py-4 bg-slate-900/50 border-2 border-dashed border-slate-600 rounded-xl hover:border-purple-500 hover:bg-slate-800/50 transition-all cursor-pointer"
-                  >
-                    <Upload className="w-5 h-5 text-slate-400" />
-                    <span className="text-slate-300 font-medium">Click to upload reference file</span>
-                  </label>
-                ) : (
-                  <div className="flex items-center justify-between px-6 py-4 bg-slate-900/50 border-2 border-purple-500 rounded-xl">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="w-5 h-5 text-green-400" />
-                      <span className="text-white font-medium">{referenceFile.name}</span>
-                      <span className="text-sm text-slate-400">
-                        ({(referenceFile.size / 1024 / 1024).toFixed(2)} MB)
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => setReferenceFile(null)}
-                      className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded-lg transition-colors"
-                    >
-                      Remove
-                    </button>
+
+                <label
+                  htmlFor="reference-file-upload"
+                  className="flex items-center justify-center gap-3 w-full px-6 py-4 bg-slate-900/50 border-2 border-dashed border-slate-600 rounded-xl hover:border-purple-500 hover:bg-slate-800/50 transition-all cursor-pointer mb-4"
+                >
+                  <Upload className="w-5 h-5 text-slate-400" />
+                  <span className="text-slate-300 font-medium">
+                    Click to upload reference files {referenceFiles.length > 0 && `(${referenceFiles.length} selected)`}
+                  </span>
+                </label>
+
+                {referenceFiles.length > 0 && (
+                  <div className="space-y-3">
+                    {referenceFiles.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between px-6 py-4 bg-slate-900/50 border-2 border-purple-500 rounded-xl">
+                        <div className="flex items-center gap-3">
+                          <CheckCircle className="w-5 h-5 text-green-400" />
+                          <span className="text-white font-medium">{file.name}</span>
+                          <span className="text-sm text-slate-400">
+                            ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => removeReferenceFile(index)}
+                          className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded-lg transition-colors"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

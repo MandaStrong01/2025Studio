@@ -15,7 +15,7 @@ Fast reference for MandaStrong Studio features
 **Method 2: Create with AI**
 1. Click tool → Create with AI
 2. Enter prompt (up to 2000 chars)
-3. Click **+ button** to add reference file (optional)
+3. Click **+ button** to add multiple reference files (optional)
 4. Choose style & quality
 5. Generate
 6. Use **Add to Timeline** button
@@ -30,8 +30,10 @@ Fast reference for MandaStrong Studio features
 
 ### Reference File Upload
 - Click **+** icon in Create with AI mode
-- Upload image or video as reference
-- Helps guide AI generation
+- Upload multiple images or videos as references
+- Shows count of selected files
+- Remove individual files as needed
+- Helps guide AI generation from multiple perspectives
 - Optional but recommended for style consistency
 
 ### Three Action Buttons
@@ -84,7 +86,8 @@ After any creation:
 ## Tips
 
 - Use detailed prompts for better AI results
-- Add reference files for style consistency
+- Upload multiple reference files for better guidance
+- Mix reference images and videos for richer context
 - Organize media library regularly
 - Save projects frequently
 - Preview before exporting

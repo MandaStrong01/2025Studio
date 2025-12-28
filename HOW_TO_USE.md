@@ -48,10 +48,12 @@ Generate brand new content from scratch using AI.
 2. **Enter Your Prompt**: Describe what you want to create in detail
    - Use the example prompts for inspiration
    - Character limit: 2000 characters
-3. **Add Reference File (Optional)**: Click the **+ button** to upload a reference image or video
+3. **Add Reference Files (Optional)**: Click the **+ button** to upload multiple reference images or videos
+   - Upload as many reference files as you need
    - This helps guide the AI to match your desired style
    - Accepts images and videos
-   - Shows file size and preview
+   - Shows file size for each file
+   - Remove individual files with the Remove button
 4. **Choose Settings**:
    - **Style**: Professional, Creative, Minimalist, Artistic, or Realistic
    - **Quality**: Standard, High, or Ultra
@@ -64,7 +66,8 @@ Generate brand new content from scratch using AI.
 ### Tips for Better AI Generation
 - Be specific and detailed in your prompts
 - Include style, lighting, mood, and composition details
-- Use reference files to guide the AI's output
+- Upload multiple reference files to guide the AI's output from different angles
+- Mix reference images and videos for better context
 - Experiment with different styles and quality settings
 - Save your favorite prompts for reuse
 

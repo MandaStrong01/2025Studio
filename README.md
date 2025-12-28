@@ -144,7 +144,8 @@ src/
 - **Upload Mode**: Upload and process existing media files
 - **Create with AI Mode**:
   - Enter text prompts to generate content
-  - Optionally add reference files using the + button
+  - Upload multiple reference files using the + button
+  - Mix images and videos as references
   - Choose style and quality settings
 - Auto-save to media library
 - **Add to Timeline**: Instantly add generated or uploaded content to your project timeline
