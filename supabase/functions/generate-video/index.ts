@@ -71,7 +71,7 @@ Deno.serve(async (req: Request) => {
 
     const fileName = `generated-video-${Date.now()}.mp4`;
 
-    const metadata = {
+    const metadata: Record<string, any> = {
       prompt,
       videoType,
       duration: maxDuration,
@@ -81,7 +81,6 @@ Deno.serve(async (req: Request) => {
       generatedAt: new Date().toISOString()
     };
 
-    // Add lyrics to metadata if lip sync video
     if (lipSync && lyrics) {
       metadata.lyrics = lyrics;
     }
