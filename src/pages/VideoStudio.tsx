@@ -47,7 +47,7 @@ export default function VideoStudio() {
     saturation: 100,
     speed: 1,
     trimStart: 0,
-    trimEnd: 100,
+    trimEnd: 0,
     targetDuration: 60,
     removeWatermark: false,
   });
@@ -86,7 +86,14 @@ export default function VideoStudio() {
 
   const handleLoadedMetadata = () => {
     if (videoRef.current) {
-      setDuration(videoRef.current.duration);
+      const videoDuration = videoRef.current.duration;
+      setDuration(videoDuration);
+      setSettings(prev => ({
+        ...prev,
+        trimStart: 0,
+        trimEnd: videoDuration,
+        targetDuration: Math.ceil(videoDuration / 60)
+      }));
     }
   };
 
@@ -113,15 +120,25 @@ export default function VideoStudio() {
   };
 
   const handleExport = async () => {
-    if (!selectedVideo || !user) return;
+    if (!selectedVideo || !user) {
+      alert('Please select a video first');
+      return;
+    }
+
+    if (!duration || duration === 0) {
+      alert('Video not loaded properly. Please select the video again.');
+      return;
+    }
 
     setIsProcessing(true);
 
     try {
+      const trimDuration = settings.trimEnd - settings.trimStart;
       const exportSettings = {
         ...settings,
         videoSource: selectedVideo.file_url,
         videoName: selectedVideo.file_name,
+        actualTrimDuration: trimDuration,
         exportedAt: new Date().toISOString()
       };
 
@@ -130,12 +147,14 @@ export default function VideoStudio() {
       const link = document.createElement('a');
       link.href = selectedVideo.file_url;
       link.download = `edited_${selectedVideo.file_name}`;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
 
-      alert(`Video export complete!\n\nTarget Duration: ${settings.targetDuration} minutes\nIn production, this would apply all your edits including trim, effects, and duration settings.`);
+      alert(`Video export started!\n\nSettings Applied:\n- Trim: ${formatTime(settings.trimStart)} to ${formatTime(settings.trimEnd)} (${formatTime(trimDuration)} total)\n- Target Duration: ${settings.targetDuration} minutes\n- Brightness: ${settings.brightness}%\n- Contrast: ${settings.contrast}%\n- Speed: ${settings.speed}x\n\nNote: In production, this would apply all edits. Currently downloading original video.`);
     } catch (error) {
       console.error('Export error:', error);
-      alert('Export failed. Please try again.');
+      alert('Export failed. The video might not be accessible for download. Please try re-uploading the video or contact support.');
     } finally {
       setIsProcessing(false);
     }
@@ -179,8 +198,8 @@ export default function VideoStudio() {
       saturation: 100,
       speed: 1,
       trimStart: 0,
-      trimEnd: 100,
-      targetDuration: 60,
+      trimEnd: duration,
+      targetDuration: Math.ceil(duration / 60),
       removeWatermark: false,
     });
   };
@@ -525,24 +544,26 @@ export default function VideoStudio() {
                       <p className="text-gray-400 text-xs mb-3">Trim Controls</p>
                       <div className="space-y-3">
                         <div>
-                          <label className="text-white text-sm font-semibold mb-2 block">Start: {settings.trimStart}%</label>
+                          <label className="text-white text-sm font-semibold mb-2 block">Start: {formatTime(settings.trimStart)}</label>
                           <input
                             type="range"
                             min="0"
-                            max={settings.trimEnd - 1}
+                            max={duration > 0 ? Math.floor(duration) : 0}
+                            step="0.1"
                             value={settings.trimStart}
-                            onChange={(e) => updateSetting('trimStart', parseInt(e.target.value))}
+                            onChange={(e) => updateSetting('trimStart', parseFloat(e.target.value))}
                             className="w-full"
                           />
                         </div>
                         <div>
-                          <label className="text-white text-sm font-semibold mb-2 block">End: {settings.trimEnd}%</label>
+                          <label className="text-white text-sm font-semibold mb-2 block">End: {formatTime(settings.trimEnd)}</label>
                           <input
                             type="range"
-                            min={settings.trimStart + 1}
-                            max="100"
+                            min={settings.trimStart + 0.1}
+                            max={duration > 0 ? Math.floor(duration) : 0}
+                            step="0.1"
                             value={settings.trimEnd}
-                            onChange={(e) => updateSetting('trimEnd', parseInt(e.target.value))}
+                            onChange={(e) => updateSetting('trimEnd', parseFloat(e.target.value))}
                             className="w-full"
                           />
                         </div>
