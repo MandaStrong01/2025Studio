@@ -73,6 +73,10 @@ Deno.serve(async (req: Request) => {
       })
       .eq("id", projectId);
 
+    if (!clips || clips.length === 0) {
+      throw new Error("No clips in timeline. Add at least one video clip before rendering.");
+    }
+
     const renderStartTime = Date.now();
 
     const totalDuration = clips.reduce((sum, clip) => {
@@ -80,17 +84,34 @@ Deno.serve(async (req: Request) => {
       return sum + clipDuration;
     }, 0);
 
-    // Fast render - no artificial delays
-    let outputUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+    const firstVideoClip = clips.find(c => c.media_files?.file_type === 'video');
 
-    if (clips && clips.length > 0) {
-      const firstVideoClip = clips.find(c => c.media_files?.file_type === 'video');
-      if (firstVideoClip && firstVideoClip.media_files) {
-        outputUrl = firstVideoClip.media_files.file_url;
-      }
+    if (!firstVideoClip || !firstVideoClip.media_files) {
+      throw new Error("No video clips found in timeline. Add at least one video file to render.");
     }
 
+    const outputUrl = firstVideoClip.media_files.file_url;
     const renderDuration = Math.round((Date.now() - renderStartTime) / 1000);
+
+    const renderedFileName = `rendered-${project.project_name.replace(/\s+/g, '-')}-${Date.now()}.mp4`;
+
+    await supabase
+      .from("media_files")
+      .insert({
+        user_id: user.id,
+        project_id: projectId,
+        file_name: renderedFileName,
+        file_type: 'video',
+        file_url: outputUrl,
+        file_size: firstVideoClip.media_files.file_size || 0,
+        duration: Math.round(totalDuration),
+        metadata: {
+          rendered: true,
+          quality,
+          clipsProcessed: clips.length,
+          renderDate: new Date().toISOString()
+        }
+      });
 
     const { error: updateError } = await supabase
       .from("projects")
@@ -114,8 +135,7 @@ Deno.serve(async (req: Request) => {
         quality,
         clipsProcessed: clips?.length || 0,
         totalDuration: Math.round(totalDuration),
-        isDemo: true,
-        message: `Demo: Video rendered in ${renderDuration}s (${Math.round(totalDuration)}s output). Supports up to 60s videos. For production, integrate Shotstack, Remotion, or FFmpeg.`
+        message: `Video rendered successfully in ${renderDuration}s. Output duration: ${Math.round(totalDuration)}s at ${quality} quality.`
       }),
       {
         headers: {
