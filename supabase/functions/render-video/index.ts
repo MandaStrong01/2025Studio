@@ -20,11 +20,17 @@ Deno.serve(async (req: Request) => {
 
   try {
     const body = await req.json();
-    projectId = body.projectId;
+    const tracks = body.tracks;
+    const settings = body.settings || {};
     const quality = body.quality || '1080p';
+    const userId = body.userId;
 
-    if (!projectId) {
-      throw new Error("Project ID is required");
+    if (!userId) {
+      throw new Error("User ID is required");
+    }
+
+    if (!tracks || tracks.length === 0) {
+      throw new Error("No tracks provided. Add media to timeline before rendering.");
     }
 
     const authHeader = req.headers.get("Authorization")!;
@@ -36,64 +42,42 @@ Deno.serve(async (req: Request) => {
 
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (!user || user.id !== userId) {
       throw new Error("Unauthorized");
     }
 
+    const totalDuration = tracks.reduce((sum: number, track: any) => sum + (track.duration || 0), 0);
+
     const { data: project, error: projectError } = await supabase
       .from("projects")
-      .select("*")
-      .eq("id", projectId)
-      .eq("user_id", user.id)
+      .insert({
+        user_id: user.id,
+        project_name: `Rendered Video ${new Date().toLocaleString()}`,
+        timeline_data: { tracks, settings },
+        duration_seconds: Math.round(totalDuration),
+        render_status: "rendering"
+      })
+      .select()
       .single();
 
     if (projectError || !project) {
-      throw new Error("Project not found");
+      throw new Error("Failed to create project: " + (projectError?.message || "Unknown error"));
     }
 
-    const { data: clips, error: clipsError } = await supabase
-      .from("timeline_clips")
-      .select(`
-        *,
-        media_files!timeline_clips_media_file_id_fkey (*)
-      `)
-      .eq("project_id", projectId)
-      .order("track_number", { ascending: true })
-      .order("start_time", { ascending: true });
-
-    if (clipsError) {
-      throw new Error("Failed to fetch timeline clips");
-    }
-
-    await supabase
-      .from("projects")
-      .update({
-        render_status: "rendering",
-        updated_at: new Date().toISOString()
-      })
-      .eq("id", projectId);
-
-    if (!clips || clips.length === 0) {
-      throw new Error("No clips in timeline. Add at least one video clip before rendering.");
-    }
+    projectId = project.id;
 
     const renderStartTime = Date.now();
 
-    const totalDuration = clips.reduce((sum, clip) => {
-      const clipDuration = (clip.end_time || 0) - (clip.start_time || 0);
-      return sum + clipDuration;
-    }, 0);
+    const firstVideoTrack = tracks.find((t: any) => t.type === 'video');
 
-    const firstVideoClip = clips.find(c => c.media_files?.file_type === 'video');
-
-    if (!firstVideoClip || !firstVideoClip.media_files) {
-      throw new Error("No video clips found in timeline. Add at least one video file to render.");
+    if (!firstVideoTrack || !firstVideoTrack.file) {
+      throw new Error("No video tracks found in timeline. Add at least one video file to render.");
     }
 
-    const outputUrl = firstVideoClip.media_files.file_url;
+    const outputUrl = firstVideoTrack.file.file_url;
     const renderDuration = Math.round((Date.now() - renderStartTime) / 1000);
 
-    const renderedFileName = `rendered-${project.project_name.replace(/\s+/g, '-')}-${Date.now()}.mp4`;
+    const renderedFileName = `rendered-${Date.now()}.mp4`;
 
     await supabase
       .from("media_files")
@@ -103,13 +87,14 @@ Deno.serve(async (req: Request) => {
         file_name: renderedFileName,
         file_type: 'video',
         file_url: outputUrl,
-        file_size: firstVideoClip.media_files.file_size || 0,
+        file_size: firstVideoTrack.file.file_size || 0,
         duration: Math.round(totalDuration),
         metadata: {
           rendered: true,
           quality,
-          clipsProcessed: clips.length,
-          renderDate: new Date().toISOString()
+          tracksProcessed: tracks.length,
+          renderDate: new Date().toISOString(),
+          settings: settings
         }
       });
 
@@ -133,7 +118,7 @@ Deno.serve(async (req: Request) => {
         outputUrl,
         renderDuration,
         quality,
-        clipsProcessed: clips?.length || 0,
+        tracksProcessed: tracks?.length || 0,
         totalDuration: Math.round(totalDuration),
         message: `Video rendered successfully in ${renderDuration}s. Output duration: ${Math.round(totalDuration)}s at ${quality} quality.`
       }),

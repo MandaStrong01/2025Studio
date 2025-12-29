@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Upload, Play, Pause, Volume2, VolumeX, Download, Save,
   Film, Sliders, ChevronDown, ChevronUp, ArrowLeft, Sparkles,
-  Trash2, Plus, Loader, CheckCircle, X, Image as ImageIcon
+  Trash2, Plus, Loader, CheckCircle, X, Image as ImageIcon, Clock
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useProject } from '../contexts/ProjectContext';
@@ -42,7 +42,8 @@ export default function VideoStudio() {
     contrast: 100,
     saturation: 100,
     removeWatermark: false,
-    enhanceQuality: false
+    enhanceQuality: false,
+    targetDuration: 60
   });
 
   const updateSetting = (key: string, value: any) => {
@@ -123,6 +124,18 @@ export default function VideoStudio() {
     setTracks(tracks.filter(t => t.id !== trackId));
     if (selectedTrack?.id === trackId) {
       setSelectedTrack(null);
+    }
+  };
+
+  const updateTrackDuration = (trackId: string, newDuration: number) => {
+    setTracks(tracks.map(track => {
+      if (track.id === trackId) {
+        return { ...track, duration: newDuration };
+      }
+      return track;
+    }));
+    if (selectedTrack?.id === trackId) {
+      setSelectedTrack({ ...selectedTrack, duration: newDuration });
     }
   };
 
@@ -406,35 +419,52 @@ export default function VideoStudio() {
                       {tracks.map((track, index) => (
                         <div
                           key={track.id}
-                          onClick={() => setSelectedTrack(track)}
-                          className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${
+                          className={`p-3 rounded-lg transition-all ${
                             selectedTrack?.id === track.id
                               ? 'bg-blue-600/30 border-2 border-blue-500'
                               : 'bg-gray-800/50 border-2 border-transparent hover:bg-gray-800'
                           }`}
                         >
-                          <div className="flex-shrink-0">
-                            {track.type === 'video' && <Film className="w-5 h-5 text-blue-400" />}
-                            {track.type === 'audio' && <Volume2 className="w-5 h-5 text-green-400" />}
-                            {track.type === 'image' && <ImageIcon className="w-5 h-5 text-orange-400" />}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-white font-semibold text-sm truncate">
-                              Track {index + 1}: {track.file.file_name}
-                            </p>
-                            <p className="text-gray-400 text-xs">
-                              Start: {formatTime(track.startTime)} | Duration: {formatTime(track.duration)}
-                            </p>
-                          </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeTrack(track.id);
-                            }}
-                            className="p-1 bg-red-600 hover:bg-red-700 rounded text-white transition-all"
+                          <div
+                            onClick={() => setSelectedTrack(track)}
+                            className="flex items-center gap-3 cursor-pointer mb-2"
                           >
-                            <X className="w-4 h-4" />
-                          </button>
+                            <div className="flex-shrink-0">
+                              {track.type === 'video' && <Film className="w-5 h-5 text-blue-400" />}
+                              {track.type === 'audio' && <Volume2 className="w-5 h-5 text-green-400" />}
+                              {track.type === 'image' && <ImageIcon className="w-5 h-5 text-orange-400" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-white font-semibold text-sm truncate">
+                                Track {index + 1}: {track.file.file_name}
+                              </p>
+                              <p className="text-gray-400 text-xs">
+                                Start: {formatTime(track.startTime)} | Duration: {formatTime(track.duration)}
+                              </p>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeTrack(track.id);
+                              }}
+                              className="p-1 bg-red-600 hover:bg-red-700 rounded text-white transition-all"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-2 pl-8" onClick={(e) => e.stopPropagation()}>
+                            <label className="text-white text-xs font-semibold whitespace-nowrap">
+                              Duration: {formatTime(track.duration)}
+                            </label>
+                            <input
+                              type="range"
+                              min="1"
+                              max="300"
+                              value={track.duration}
+                              onChange={(e) => updateTrackDuration(track.id, parseInt(e.target.value))}
+                              className="flex-1 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                            />
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -621,6 +651,26 @@ export default function VideoStudio() {
                   <div className="p-4 space-y-4">
                     <div>
                       <label className="text-white text-sm font-semibold mb-2 block flex items-center gap-2">
+                        <Clock className="w-4 h-4" />
+                        Target Duration: {formatTime(settings.targetDuration)}
+                      </label>
+                      <input
+                        type="range"
+                        min="5"
+                        max="600"
+                        value={settings.targetDuration}
+                        onChange={(e) => updateSetting('targetDuration', parseInt(e.target.value))}
+                        className="w-full slider"
+                      />
+                      <div className="flex justify-between text-xs text-gray-400 mt-1">
+                        <span>5 sec</span>
+                        <span>5 min</span>
+                        <span>10 min</span>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-gray-700 pt-4">
+                      <label className="text-white text-sm font-semibold mb-2 block flex items-center gap-2">
                         <Volume2 className="w-4 h-4" />
                         Volume: {settings.volume}%
                       </label>
@@ -653,7 +703,7 @@ export default function VideoStudio() {
                       </div>
                     </div>
 
-                    <div className="border-t border-gray-700 pt-4">
+                    <div>
                       <label className="text-white text-sm font-semibold mb-2 block">
                         Brightness: {settings.brightness}%
                       </label>
