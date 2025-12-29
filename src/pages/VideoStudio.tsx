@@ -20,7 +20,7 @@ interface Track {
 
 export default function VideoStudio() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const { mediaFiles, addMediaFiles } = useProject();
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -164,7 +164,7 @@ export default function VideoStudio() {
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'Authorization': `Bearer ${session?.access_token}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ prompt: aiPrompt, userId: user.id })
@@ -201,7 +201,7 @@ export default function VideoStudio() {
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'Authorization': `Bearer ${session?.access_token}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
