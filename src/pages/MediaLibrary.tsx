@@ -293,6 +293,13 @@ export default function MediaLibrary() {
             </div>
             <div className="flex gap-3">
               <button
+                onClick={() => navigate('/video-studio')}
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold rounded-lg transition-all shadow-lg"
+              >
+                <Video className="w-5 h-5" />
+                Open Video Studio
+              </button>
+              <button
                 onClick={() => navigate('/ai-tools')}
                 className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-all"
               >
