@@ -36,6 +36,7 @@ export default function VideoStudio() {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isVideoLoading, setIsVideoLoading] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string>('audio');
 
   const [settings, setSettings] = useState<EditSettings>({
@@ -93,6 +94,7 @@ export default function VideoStudio() {
         trimStart: 0,
         trimEnd: videoDuration
       }));
+      setIsVideoLoading(false);
     }
   };
 
@@ -124,8 +126,13 @@ export default function VideoStudio() {
       return;
     }
 
-    if (!duration || duration === 0) {
-      alert('Video not loaded properly. Please select the video again.');
+    if (!duration || duration === 0 || settings.trimEnd === 0) {
+      alert('Video is still loading. Please wait a moment and try again.');
+      return;
+    }
+
+    if (settings.trimStart >= settings.trimEnd) {
+      alert('Invalid trim settings. Start time must be before end time.');
       return;
     }
 
@@ -198,7 +205,7 @@ export default function VideoStudio() {
       speed: 1,
       trimStart: 0,
       trimEnd: duration,
-      targetDuration: Math.ceil(duration / 60),
+      targetDuration: 180,
       removeWatermark: false,
     });
   };
@@ -261,15 +268,32 @@ export default function VideoStudio() {
               <div className="bg-black/70 border border-purple-600/30 rounded-xl p-6">
                 <div className="aspect-video bg-black rounded-lg overflow-hidden mb-4 relative">
                   {selectedVideo ? (
-                    <video
-                      ref={videoRef}
-                      src={selectedVideo.file_url}
-                      className="w-full h-full object-contain"
-                      style={getVideoStyle()}
-                      onTimeUpdate={handleTimeUpdate}
-                      onLoadedMetadata={handleLoadedMetadata}
-                      onEnded={() => setIsPlaying(false)}
-                    />
+                    <>
+                      <video
+                        ref={videoRef}
+                        src={selectedVideo.file_url}
+                        className="w-full h-full object-contain"
+                        style={getVideoStyle()}
+                        onTimeUpdate={handleTimeUpdate}
+                        onLoadedMetadata={handleLoadedMetadata}
+                        onEnded={() => setIsPlaying(false)}
+                        onError={(e) => {
+                          console.error('Video load error:', e);
+                          setIsVideoLoading(false);
+                          alert('Failed to load video. Please check the file and try again.');
+                        }}
+                        crossOrigin="anonymous"
+                        preload="metadata"
+                      />
+                      {isVideoLoading && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+                          <div className="text-center">
+                            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-500 mx-auto mb-4"></div>
+                            <p className="text-white text-lg font-semibold">Loading video...</p>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <div className="text-center">
@@ -316,23 +340,33 @@ export default function VideoStudio() {
                       </div>
                     </div>
 
-                    <div className="flex gap-3 flex-wrap">
-                      <button
-                        onClick={handleSaveProject}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-all"
-                      >
-                        <Save className="w-4 h-4" />
-                        Save Project
-                      </button>
+                    <div className="space-y-3">
+                      {duration > 0 && (
+                        <div className="bg-green-900/30 border border-green-600/30 rounded-lg p-3">
+                          <p className="text-green-400 text-sm font-semibold">
+                            ✓ Video loaded successfully - Duration: {formatTime(duration)}
+                          </p>
+                        </div>
+                      )}
 
-                      <button
-                        onClick={handleExport}
-                        disabled={isProcessing}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <Download className="w-4 h-4" />
-                        {isProcessing ? 'Processing...' : 'Export Video'}
-                      </button>
+                      <div className="flex gap-3 flex-wrap">
+                        <button
+                          onClick={handleSaveProject}
+                          disabled={isVideoLoading || duration === 0}
+                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Save className="w-4 h-4" />
+                          Save Project
+                        </button>
+
+                        <button
+                          onClick={handleExport}
+                          disabled={isProcessing || isVideoLoading || duration === 0}
+                          className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Download className="w-4 h-4" />
+                          {isProcessing ? 'Processing...' : isVideoLoading ? 'Loading...' : 'Export Video'}
+                        </button>
 
                       <button
                         onClick={resetSettings}
@@ -341,6 +375,7 @@ export default function VideoStudio() {
                         <RotateCcw className="w-4 h-4" />
                         Reset
                       </button>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -359,7 +394,9 @@ export default function VideoStudio() {
                         onClick={() => {
                           setSelectedVideo(video);
                           setIsPlaying(false);
-                          resetSettings();
+                          setCurrentTime(0);
+                          setDuration(0);
+                          setIsVideoLoading(true);
                         }}
                         className={`p-3 rounded-lg border-2 transition-all text-left ${
                           selectedVideo?.id === video.id
