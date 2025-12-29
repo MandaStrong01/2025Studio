@@ -49,6 +49,40 @@ export default function ToolWorkspace() {
     setReferenceFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  const getMediaDuration = (file: File): Promise<number> => {
+    return new Promise((resolve) => {
+      const fileType = file.type.split('/')[0];
+
+      if (fileType === 'video') {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        video.onloadedmetadata = () => {
+          window.URL.revokeObjectURL(video.src);
+          const durationInSeconds = Math.round(video.duration);
+          resolve(durationInSeconds);
+        };
+        video.onerror = () => {
+          resolve(10800);
+        };
+        video.src = URL.createObjectURL(file);
+      } else if (fileType === 'audio') {
+        const audio = document.createElement('audio');
+        audio.preload = 'metadata';
+        audio.onloadedmetadata = () => {
+          window.URL.revokeObjectURL(audio.src);
+          const durationInSeconds = Math.round(audio.duration);
+          resolve(durationInSeconds);
+        };
+        audio.onerror = () => {
+          resolve(10800);
+        };
+        audio.src = URL.createObjectURL(file);
+      } else {
+        resolve(10800);
+      }
+    });
+  };
+
   const handleProcessFile = async () => {
     if (!uploadedFile || !user) return;
 
@@ -68,6 +102,7 @@ export default function ToolWorkspace() {
           .getPublicUrl(filePath);
 
         const fileType = uploadedFile.type.split('/')[0];
+        const duration = await getMediaDuration(uploadedFile);
 
         const mediaFile = await addMediaFile({
           user_id: user.id,
@@ -76,11 +111,12 @@ export default function ToolWorkspace() {
           file_type: fileType,
           file_url: publicUrl,
           file_size: uploadedFile.size,
-          duration: 0,
+          duration: duration,
           metadata: {
             originalName: uploadedFile.name,
             mimeType: uploadedFile.type,
-            uploadedFrom: toolName?.replace(/-/g, ' ') || 'AI Tool'
+            uploadedFrom: toolName?.replace(/-/g, ' ') || 'AI Tool',
+            durationMinutes: Math.round(duration / 60)
           }
         });
 
@@ -126,7 +162,7 @@ export default function ToolWorkspace() {
           project_id: currentProject.id,
           media_file_id: mediaFile.id,
           start_time: 0,
-          end_time: mediaFile.duration || 5,
+          end_time: mediaFile.duration || 10800,
           track_number: 1,
         });
 
@@ -182,7 +218,7 @@ export default function ToolWorkspace() {
           project_id: currentProject.id,
           media_file_id: mediaFile.id,
           start_time: 0,
-          end_time: mediaFile.duration || 5,
+          end_time: mediaFile.duration || 10800,
           track_number: 1,
         });
 
@@ -252,12 +288,13 @@ export default function ToolWorkspace() {
           file_type: fileType,
           file_url: contentUrl,
           file_size: 0,
-          duration: 0,
+          duration: 10800,
           metadata: {
             generatedBy: 'AI',
             prompt: prompt,
             toolName: toolName?.replace(/-/g, ' '),
-            generatedAt: new Date().toISOString()
+            generatedAt: new Date().toISOString(),
+            durationMinutes: 180
           }
         });
 
