@@ -10,7 +10,7 @@ interface AIToolBoardProps {
   nextRoute?: string;
 }
 
-export default function AIToolBoard({ children, currentTool, showNavigation = false, prevRoute, nextRoute }: AIToolBoardProps) {
+export default function AIToolBoard({ children, showNavigation = false, prevRoute, nextRoute }: AIToolBoardProps) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [showQuickMenu, setShowQuickMenu] = useState(false);

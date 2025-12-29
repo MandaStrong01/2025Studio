@@ -6,7 +6,6 @@ import { supabase } from '../lib/supabase';
 import {
   getAllStaticVideos,
   updateStaticVideo,
-  REQUIRED_VIDEOS,
   StaticVideo,
 } from '../lib/videoAssets';
 

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Upload, Film, Trash2, Edit, Eye, EyeOff, Star, X, Play } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Upload, Film, Trash2, Eye, EyeOff, Star, X, Play } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useState, useEffect } from 'react';

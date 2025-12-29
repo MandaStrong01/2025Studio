@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Upload, Play, Pause, Volume2, VolumeX, Download, Save,
+  Upload, Play, Pause, Volume2, Download,
   Film, Sliders, ChevronDown, ChevronUp, ArrowLeft, Sparkles,
-  Trash2, Plus, Loader, CheckCircle, X, Image as ImageIcon, Clock
+  Trash2, Plus, Loader, X, Image as ImageIcon, Clock
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useProject } from '../contexts/ProjectContext';
@@ -65,7 +65,7 @@ export default function VideoStudio() {
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
         const filePath = `${user.id}/${fileName}`;
 
-        const { data, error } = await supabase.storage
+        const { error } = await supabase.storage
           .from('media')
           .upload(filePath, file, { cacheControl: '3600', upsert: false });
 

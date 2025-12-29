@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Upload, Sparkles, ArrowLeft, CheckCircle, Lock, Plus, Download, X } from 'lucide-react';
+import { Upload, Sparkles, ArrowLeft, CheckCircle, Lock, Plus, Download } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useProject } from '../contexts/ProjectContext';
@@ -105,7 +105,7 @@ export default function ToolWorkspace() {
         const duration = await getMediaDuration(uploadedFile);
 
         const mediaFile = await addMediaFile({
-          user_id: user.id,
+          user_id: user?.id || '',
           project_id: currentProject?.id || null,
           file_name: uploadedFile.name,
           file_type: fileType,
@@ -282,7 +282,7 @@ export default function ToolWorkspace() {
         const fileName = `AI-Generated-${toolName?.replace(/-/g, '-')}-${Date.now()}.${isImage ? 'png' : 'mp4'}`;
 
         const mediaFile = await addMediaFile({
-          user_id: user.id,
+          user_id: user?.id || '',
           project_id: currentProject?.id || null,
           file_name: fileName,
           file_type: fileType,

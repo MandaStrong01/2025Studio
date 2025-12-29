@@ -2,16 +2,12 @@ import { Home, ArrowLeft, BookOpen, Play } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { getVideoUrl, REQUIRED_VIDEOS } from '../lib/videoAssets';
 
-interface PageProps {
-  onNavigate: (page: number) => void;
-}
-
 const EXTERNAL_URLS = {
   guide: '/guide.html',
   store: import.meta.env.VITE_ETSY_STORE_URL || 'https://MandaStrong1.Etsy.com',
 };
 
-export default function Page21({ onNavigate }: PageProps) {
+export default function Page21() {
   const [videoUrl, setVideoUrl] = useState<string>('');
 
   useEffect(() => {
@@ -163,14 +159,14 @@ export default function Page21({ onNavigate }: PageProps) {
 
           <div className="flex gap-4 justify-center">
             <button
-              onClick={() => onNavigate(19)}
+              onClick={() => window.history.back()}
               className="flex items-center gap-2 bg-black text-white font-bold px-8 py-4 rounded-lg text-lg hover:bg-purple-900 transition-all border border-purple-500"
             >
               <ArrowLeft className="w-5 h-5" />
               Back
             </button>
             <button
-              onClick={() => onNavigate(0)}
+              onClick={() => window.location.href = '/'}
               className="flex items-center gap-2 bg-purple-600 text-white font-bold px-8 py-4 rounded-lg text-lg hover:bg-purple-500 transition-all"
             >
               <Home className="w-5 h-5" />

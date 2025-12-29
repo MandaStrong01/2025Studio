@@ -9,10 +9,9 @@ import MediaSkeleton from '../components/MediaSkeleton';
 
 export default function MediaLibrary() {
   const navigate = useNavigate();
-  const { user, isAdmin } = useAuth();
+  const { user } = useAuth();
   const { mediaFiles, addMediaFiles, deleteMediaFile, currentProject } = useProject();
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadCount, setUploadCount] = useState(0);
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number; currentFile: string }>({ current: 0, total: 0, currentFile: '' });
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
@@ -64,7 +63,6 @@ export default function MediaLibrary() {
     if (!files || files.length === 0 || !user) return;
 
     setIsUploading(true);
-    setUploadCount(files.length);
     setUploadProgress({ current: 0, total: files.length, currentFile: '' });
 
     try {
@@ -156,7 +154,6 @@ export default function MediaLibrary() {
       alert(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsUploading(false);
-      setUploadCount(0);
       setUploadProgress({ current: 0, total: 0, currentFile: '' });
     }
   };

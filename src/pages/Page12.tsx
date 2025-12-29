@@ -30,11 +30,11 @@ export default function Page12() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isRendering, setIsRendering] = useState(false);
-  const [renderProgress, setRenderProgress] = useState(0);
+  const [isRendering] = useState(false);
+  const [renderProgress] = useState(0);
   const [renderError, setRenderError] = useState<string | null>(null);
   const [showRenderModal, setShowRenderModal] = useState(false);
-  const [selectedQuality, setSelectedQuality] = useState('1080p');
+  const [selectedQuality] = useState('1080p');
 
   const tracks = [
     { id: 1, name: 'VIDEO 1', type: 'video' },
@@ -270,79 +270,6 @@ export default function Page12() {
     }
 
     e.target.value = '';
-  };
-
-  const handleRenderVideo = async () => {
-    if (!currentProject) {
-      alert('No project selected');
-      return;
-    }
-
-    if (timelineClips.length === 0) {
-      alert('Add at least one clip to the timeline before rendering');
-      return;
-    }
-
-    setIsRendering(true);
-    setRenderProgress(0);
-    setRenderError(null);
-    setShowRenderModal(true);
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
-
-      // Fast progress simulation
-      const progressInterval = setInterval(() => {
-        setRenderProgress(prev => {
-          if (prev >= 90) return prev;
-          return Math.min(prev + 15, 90);
-        });
-      }, 150);
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/render-video`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            projectId: currentProject.id,
-            quality: selectedQuality
-          })
-        }
-      );
-
-      clearInterval(progressInterval);
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Render failed');
-      }
-
-      const result = await response.json();
-      setRenderProgress(100);
-
-      // Refresh project to get updated output_url
-      const { data: projects } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('id', currentProject.id)
-        .single();
-
-      if (projects) {
-        setIsRendering(false);
-        setTimeout(() => {
-          setShowRenderModal(false);
-        }, 1500);
-      }
-    } catch (error: any) {
-      console.error('Render error:', error);
-      setRenderError(error.message);
-      setIsRendering(false);
-    }
   };
 
   const downloadRenderedVideo = () => {

@@ -68,7 +68,7 @@ export async function uploadStaticVideo(file: File, filename?: string): Promise<
   const finalFilename = filename || file.name;
   const path = `${STATIC_VIDEO_FOLDER}/${finalFilename}`;
 
-  const { data, error } = await supabase.storage
+  const { error } = await supabase.storage
     .from(STATIC_VIDEO_BUCKET)
     .upload(path, file, {
       upsert: true,
