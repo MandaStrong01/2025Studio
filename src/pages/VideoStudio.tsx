@@ -43,7 +43,7 @@ export default function VideoStudio() {
     saturation: 100,
     removeWatermark: false,
     enhanceQuality: false,
-    targetDuration: 60
+    targetDuration: 600
   });
 
   const updateSetting = (key: string, value: any) => {
@@ -454,12 +454,12 @@ export default function VideoStudio() {
                           </div>
                           <div className="flex items-center gap-2 pl-8" onClick={(e) => e.stopPropagation()}>
                             <label className="text-white text-xs font-semibold whitespace-nowrap">
-                              Duration: {formatTime(track.duration)}
+                              Duration: {Math.floor(track.duration / 60)} min {track.duration % 60} sec
                             </label>
                             <input
                               type="range"
-                              min="1"
-                              max="300"
+                              min="0"
+                              max="10800"
                               value={track.duration}
                               onChange={(e) => updateTrackDuration(track.id, parseInt(e.target.value))}
                               className="flex-1 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer"
@@ -652,20 +652,21 @@ export default function VideoStudio() {
                     <div>
                       <label className="text-white text-sm font-semibold mb-2 block flex items-center gap-2">
                         <Clock className="w-4 h-4" />
-                        Target Duration: {formatTime(settings.targetDuration)}
+                        Target Duration: {Math.floor(settings.targetDuration / 60)} min {settings.targetDuration % 60} sec
                       </label>
                       <input
                         type="range"
-                        min="5"
-                        max="600"
+                        min="0"
+                        max="10800"
                         value={settings.targetDuration}
                         onChange={(e) => updateSetting('targetDuration', parseInt(e.target.value))}
                         className="w-full slider"
                       />
                       <div className="flex justify-between text-xs text-gray-400 mt-1">
-                        <span>5 sec</span>
-                        <span>5 min</span>
-                        <span>10 min</span>
+                        <span>0 min</span>
+                        <span>60 min</span>
+                        <span>120 min</span>
+                        <span>180 min</span>
                       </div>
                     </div>
 
