@@ -206,12 +206,24 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       .insert(files)
       .select();
 
-    if (!error && data) {
-      setMediaFiles([...data, ...mediaFiles]);
-      return data;
+    if (error) {
+      console.error('Failed to insert media files into database:', error);
+      console.error('Error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
+      return [];
     }
 
-    return [];
+    if (!data) {
+      console.error('No data returned from media_files insert');
+      return [];
+    }
+
+    setMediaFiles([...data, ...mediaFiles]);
+    return data;
   };
 
   const deleteMediaFile = async (fileId: string, fileUrl: string) => {
