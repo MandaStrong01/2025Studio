@@ -113,11 +113,18 @@ export default function VideoStudio() {
   };
 
   const handleExport = async () => {
-    if (!selectedVideo) return;
+    if (!selectedVideo || !user) return;
 
     setIsProcessing(true);
 
     try {
+      const exportSettings = {
+        ...settings,
+        videoSource: selectedVideo.file_url,
+        videoName: selectedVideo.file_name,
+        exportedAt: new Date().toISOString()
+      };
+
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       const link = document.createElement('a');
@@ -125,10 +132,10 @@ export default function VideoStudio() {
       link.download = `edited_${selectedVideo.file_name}`;
       link.click();
 
-      alert('Video export complete! In a production environment, this would apply all your edits.');
+      alert(`Video export complete!\n\nTarget Duration: ${settings.targetDuration} minutes\nIn production, this would apply all your edits including trim, effects, and duration settings.`);
     } catch (error) {
       console.error('Export error:', error);
-      alert('Export failed');
+      alert('Export failed. Please try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -140,11 +147,16 @@ export default function VideoStudio() {
     try {
       const { error } = await supabase
         .from('projects')
-        .upsert({
+        .insert({
           user_id: user.id,
-          name: `Edited - ${selectedVideo.file_name}`,
-          settings: JSON.stringify(settings),
-          video_id: selectedVideo.id,
+          project_name: `Edited - ${selectedVideo.file_name}`,
+          timeline_data: {
+            settings: settings,
+            media_file_id: selectedVideo.id,
+            created_from: 'video_studio'
+          },
+          duration_seconds: Math.round(settings.targetDuration * 60),
+          render_status: 'draft',
           updated_at: new Date().toISOString(),
         });
 
