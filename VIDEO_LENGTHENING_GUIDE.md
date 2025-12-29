@@ -1,5 +1,14 @@
 # How to Lengthen Videos to 180 Minutes
 
+## Default Settings
+
+The Video Studio is now configured with:
+- **Target Duration: 180 minutes** (default)
+- **Trim Start: 0 seconds** (automatically set when video loads)
+- **Trim End: Full video duration** (automatically set when video loads)
+
+No manual configuration needed unless you want different values.
+
 ## Video Studio Method
 
 ### Steps to Set Target Duration to 180 Minutes:
@@ -7,18 +16,20 @@
 1. **Navigate to Video Studio**
    - From the main menu, click "Video Studio" or navigate to `/video-studio`
 
-2. **Select Your Video**
+2. **Verify Default Settings**
+   - The target duration is **automatically set to 180 minutes** by default
+   - No manual adjustment needed unless you want a different duration
+
+3. **Select Your Video**
    - Choose a video from your uploaded videos in the "Your Videos" section
    - The video will load in the preview player
+   - Trim points will automatically adjust to the video's full length
 
-3. **Open Trim & Duration Controls**
-   - Scroll down to the "Trim & Duration" section
-   - Click to expand the section if it's not already open
-
-4. **Set Target Duration**
-   - Find the "Target Duration" slider
-   - Drag the slider all the way to the right to set it to **180 minutes**
-   - The display will show: "Target Duration: 180 minutes"
+4. **Adjust Target Duration (Optional)**
+   - Open the "Trim & Duration" section if needed
+   - The "Target Duration" slider is already set to **180 minutes**
+   - Adjust only if you want a different duration
+   - The display shows: "Target Duration: 180 minutes"
 
 5. **Set Trim Points**
    - **Start Time**: Use the "Start" slider to set when the video should begin (default: 0:00)

@@ -48,7 +48,7 @@ export default function VideoStudio() {
     speed: 1,
     trimStart: 0,
     trimEnd: 0,
-    targetDuration: 60,
+    targetDuration: 180,
     removeWatermark: false,
   });
 
@@ -91,8 +91,7 @@ export default function VideoStudio() {
       setSettings(prev => ({
         ...prev,
         trimStart: 0,
-        trimEnd: videoDuration,
-        targetDuration: Math.ceil(videoDuration / 60)
+        trimEnd: videoDuration
       }));
     }
   };
