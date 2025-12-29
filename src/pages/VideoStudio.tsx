@@ -20,6 +20,7 @@ interface EditSettings {
   speed: number;
   trimStart: number;
   trimEnd: number;
+  targetDuration: number;
   removeWatermark: boolean;
 }
 
@@ -47,6 +48,7 @@ export default function VideoStudio() {
     speed: 1,
     trimStart: 0,
     trimEnd: 100,
+    targetDuration: 60,
     removeWatermark: false,
   });
 
@@ -166,6 +168,7 @@ export default function VideoStudio() {
       speed: 1,
       trimStart: 0,
       trimEnd: 100,
+      targetDuration: 60,
       removeWatermark: false,
     });
   };
@@ -489,26 +492,49 @@ export default function VideoStudio() {
                 {expandedSection === 'trim' && (
                   <div className="p-4 space-y-4">
                     <div>
-                      <label className="text-white text-sm font-semibold mb-2 block">Start: {settings.trimStart}%</label>
+                      <label className="text-white text-sm font-semibold mb-2 block">
+                        Target Duration: {settings.targetDuration} minutes
+                      </label>
                       <input
                         type="range"
                         min="0"
-                        max={settings.trimEnd - 1}
-                        value={settings.trimStart}
-                        onChange={(e) => updateSetting('trimStart', parseInt(e.target.value))}
+                        max="180"
+                        value={settings.targetDuration}
+                        onChange={(e) => updateSetting('targetDuration', parseInt(e.target.value))}
                         className="w-full"
                       />
+                      <div className="flex justify-between text-xs text-gray-400 mt-1">
+                        <span>0 min</span>
+                        <span>90 min</span>
+                        <span>180 min</span>
+                      </div>
                     </div>
-                    <div>
-                      <label className="text-white text-sm font-semibold mb-2 block">End: {settings.trimEnd}%</label>
-                      <input
-                        type="range"
-                        min={settings.trimStart + 1}
-                        max="100"
-                        value={settings.trimEnd}
-                        onChange={(e) => updateSetting('trimEnd', parseInt(e.target.value))}
-                        className="w-full"
-                      />
+                    <div className="border-t border-purple-600/30 pt-4">
+                      <p className="text-gray-400 text-xs mb-3">Trim Controls</p>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-white text-sm font-semibold mb-2 block">Start: {settings.trimStart}%</label>
+                          <input
+                            type="range"
+                            min="0"
+                            max={settings.trimEnd - 1}
+                            value={settings.trimStart}
+                            onChange={(e) => updateSetting('trimStart', parseInt(e.target.value))}
+                            className="w-full"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-white text-sm font-semibold mb-2 block">End: {settings.trimEnd}%</label>
+                          <input
+                            type="range"
+                            min={settings.trimStart + 1}
+                            max="100"
+                            value={settings.trimEnd}
+                            onChange={(e) => updateSetting('trimEnd', parseInt(e.target.value))}
+                            className="w-full"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
