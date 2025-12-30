@@ -1,3 +1,8 @@
+# Movie Editor App
+
+🎬 **Live Demo:** [Click here to use the app](https://mandastrong-studio-2-r8nm.bolt.host)
+
+Professional video editing platform with AI-powered movie enhancement.
 # MANDASTRONG STUDIO
 
 The All-In-One Make-A-Movie Application
