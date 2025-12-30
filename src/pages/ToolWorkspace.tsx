@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Upload, Sparkles, ArrowLeft, CheckCircle, Lock, Plus, Download } from 'lucide-react';
+import { Upload, Sparkles, ArrowLeft, CheckCircle, Lock, Plus, Download, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useProject } from '../contexts/ProjectContext';
@@ -49,40 +49,6 @@ export default function ToolWorkspace() {
     setReferenceFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const getMediaDuration = (file: File): Promise<number> => {
-    return new Promise((resolve) => {
-      const fileType = file.type.split('/')[0];
-
-      if (fileType === 'video') {
-        const video = document.createElement('video');
-        video.preload = 'metadata';
-        video.onloadedmetadata = () => {
-          window.URL.revokeObjectURL(video.src);
-          const durationInSeconds = Math.round(video.duration);
-          resolve(durationInSeconds);
-        };
-        video.onerror = () => {
-          resolve(10800);
-        };
-        video.src = URL.createObjectURL(file);
-      } else if (fileType === 'audio') {
-        const audio = document.createElement('audio');
-        audio.preload = 'metadata';
-        audio.onloadedmetadata = () => {
-          window.URL.revokeObjectURL(audio.src);
-          const durationInSeconds = Math.round(audio.duration);
-          resolve(durationInSeconds);
-        };
-        audio.onerror = () => {
-          resolve(10800);
-        };
-        audio.src = URL.createObjectURL(file);
-      } else {
-        resolve(10800);
-      }
-    });
-  };
-
   const handleProcessFile = async () => {
     if (!uploadedFile || !user) return;
 
@@ -102,21 +68,19 @@ export default function ToolWorkspace() {
           .getPublicUrl(filePath);
 
         const fileType = uploadedFile.type.split('/')[0];
-        const duration = await getMediaDuration(uploadedFile);
 
         const mediaFile = await addMediaFile({
-          user_id: user?.id || '',
+          user_id: user.id,
           project_id: currentProject?.id || null,
           file_name: uploadedFile.name,
           file_type: fileType,
           file_url: publicUrl,
           file_size: uploadedFile.size,
-          duration: duration,
+          duration: 0,
           metadata: {
             originalName: uploadedFile.name,
             mimeType: uploadedFile.type,
-            uploadedFrom: toolName?.replace(/-/g, ' ') || 'AI Tool',
-            durationMinutes: Math.round(duration / 60)
+            uploadedFrom: toolName?.replace(/-/g, ' ') || 'AI Tool'
           }
         });
 
@@ -162,7 +126,7 @@ export default function ToolWorkspace() {
           project_id: currentProject.id,
           media_file_id: mediaFile.id,
           start_time: 0,
-          end_time: mediaFile.duration || 10800,
+          end_time: mediaFile.duration || 5,
           track_number: 1,
         });
 
@@ -218,7 +182,7 @@ export default function ToolWorkspace() {
           project_id: currentProject.id,
           media_file_id: mediaFile.id,
           start_time: 0,
-          end_time: mediaFile.duration || 10800,
+          end_time: mediaFile.duration || 5,
           track_number: 1,
         });
 
@@ -282,19 +246,18 @@ export default function ToolWorkspace() {
         const fileName = `AI-Generated-${toolName?.replace(/-/g, '-')}-${Date.now()}.${isImage ? 'png' : 'mp4'}`;
 
         const mediaFile = await addMediaFile({
-          user_id: user?.id || '',
+          user_id: user.id,
           project_id: currentProject?.id || null,
           file_name: fileName,
           file_type: fileType,
           file_url: contentUrl,
           file_size: 0,
-          duration: 10800,
+          duration: 0,
           metadata: {
             generatedBy: 'AI',
             prompt: prompt,
             toolName: toolName?.replace(/-/g, ' '),
-            generatedAt: new Date().toISOString(),
-            durationMinutes: 180
+            generatedAt: new Date().toISOString()
           }
         });
 

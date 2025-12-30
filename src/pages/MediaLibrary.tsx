@@ -9,9 +9,10 @@ import MediaSkeleton from '../components/MediaSkeleton';
 
 export default function MediaLibrary() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { mediaFiles, addMediaFiles, deleteMediaFile, currentProject } = useProject();
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadCount, setUploadCount] = useState(0);
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number; currentFile: string }>({ current: 0, total: 0, currentFile: '' });
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
@@ -21,7 +22,6 @@ export default function MediaLibrary() {
   const [timelineDropActive, setTimelineDropActive] = useState(false);
   const [previewVideo, setPreviewVideo] = useState<string | null>(null);
   const [timelineItems, setTimelineItems] = useState<any[]>([]);
-  const [uploadSuccess, setUploadSuccess] = useState<{ count: number; show: boolean }>({ count: 0, show: false });
 
   useEffect(() => {
     if (user && isInitialLoad) {
@@ -63,97 +63,61 @@ export default function MediaLibrary() {
     if (!files || files.length === 0 || !user) return;
 
     setIsUploading(true);
+    setUploadCount(files.length);
     setUploadProgress({ current: 0, total: files.length, currentFile: '' });
 
     try {
       const filesArray = Array.from(files);
       const uploadedFiles = [];
-      const failedFiles = [];
 
       for (let i = 0; i < filesArray.length; i++) {
         const file = filesArray[i];
         setUploadProgress({ current: i + 1, total: files.length, currentFile: file.name });
 
-        try {
-          const fileExt = file.name.split('.').pop();
-          const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-          const filePath = `${user.id}/${fileName}`;
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `${user.id}/${fileName}`;
 
-          const { data, error } = await supabase.storage
-            .from('media')
-            .upload(filePath, file, {
-              cacheControl: '3600',
-              upsert: false
-            });
+        const { data, error } = await supabase.storage
+          .from('media')
+          .upload(filePath, file);
 
-          if (error) {
-            console.error(`Storage upload failed for ${file.name}:`, error);
-            failedFiles.push({ name: file.name, error: error.message });
-            continue;
-          }
-
-          if (!data) {
-            console.error(`No data returned for ${file.name}`);
-            failedFiles.push({ name: file.name, error: 'No data returned from storage' });
-            continue;
-          }
-
-          const { data: { publicUrl } } = supabase.storage
-            .from('media')
-            .getPublicUrl(filePath);
-
-          const fileType = file.type.split('/')[0];
-
-          let duration = 0;
-          if (fileType === 'video' || fileType === 'audio') {
-            duration = await getMediaDuration(file);
-          }
-
-          uploadedFiles.push({
-            user_id: user.id,
-            project_id: currentProject?.id || null,
-            file_name: file.name,
-            file_type: fileType,
-            file_url: publicUrl,
-            file_size: file.size,
-            duration: Math.round(duration),
-            metadata: { originalName: file.name, mimeType: file.type }
-          });
-        } catch (fileError) {
-          console.error(`Error processing ${file.name}:`, fileError);
-          failedFiles.push({ name: file.name, error: String(fileError) });
+        if (error || !data) {
+          console.error(`Failed to upload ${file.name}:`, error);
+          continue;
         }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('media')
+          .getPublicUrl(filePath);
+
+        const fileType = file.type.split('/')[0];
+
+        let duration = 0;
+        if (fileType === 'video' || fileType === 'audio') {
+          duration = await getMediaDuration(file);
+        }
+
+        uploadedFiles.push({
+          user_id: user.id,
+          project_id: currentProject?.id || null,
+          file_name: file.name,
+          file_type: fileType,
+          file_url: publicUrl,
+          file_size: file.size,
+          duration: Math.round(duration),
+          metadata: { originalName: file.name, mimeType: file.type }
+        });
       }
 
       if (uploadedFiles.length > 0) {
-        const addedFiles = await addMediaFiles(uploadedFiles);
-
-        if (addedFiles.length === 0) {
-          alert('Failed to save files to database. Please check your permissions and try again.\n\nCheck the browser console (F12) for detailed error messages.');
-          return;
-        }
-
-        if (addedFiles.length === uploadedFiles.length && failedFiles.length === 0) {
-          setUploadSuccess({ count: addedFiles.length, show: true });
-          setTimeout(() => setUploadSuccess({ count: 0, show: false }), 4000);
-        } else if (addedFiles.length < uploadedFiles.length) {
-          alert(`Uploaded ${addedFiles.length} of ${uploadedFiles.length} files successfully.`);
-        }
-      }
-
-      if (failedFiles.length > 0) {
-        const failedNames = failedFiles.map(f => `- ${f.name}: ${f.error}`).join('\n');
-        alert(`Some files failed to upload:\n\n${failedNames}\n\nCheck the browser console (F12) for more details.`);
-      }
-
-      if (uploadedFiles.length === 0 && failedFiles.length > 0) {
-        alert('All files failed to upload. Please check the browser console (F12) for error details.');
+        await addMediaFiles(uploadedFiles);
       }
     } catch (error) {
-      console.error('Upload process failed:', error);
-      alert(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('Upload failed:', error);
     } finally {
       setIsUploading(false);
+      setUploadCount(0);
       setUploadProgress({ current: 0, total: 0, currentFile: '' });
     }
   };
@@ -320,20 +284,6 @@ export default function MediaLibrary() {
         </div>
       )}
 
-      {uploadSuccess.show && (
-        <div className="fixed top-20 right-4 z-50 max-w-sm animate-slide-in">
-          <div className="bg-green-900/90 backdrop-blur-xl border border-green-600 rounded-lg p-4 shadow-lg">
-            <div className="flex items-center gap-3">
-              <CheckCircle className="w-5 h-5 text-green-400" />
-              <div className="flex-1">
-                <p className="text-white font-semibold text-sm">Upload Complete!</p>
-                <p className="text-green-200 text-xs">Successfully uploaded {uploadSuccess.count} file{uploadSuccess.count > 1 ? 's' : ''}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="p-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-8">
@@ -342,13 +292,6 @@ export default function MediaLibrary() {
               <p className="text-gray-400">Manage your uploaded media files</p>
             </div>
             <div className="flex gap-3">
-              <button
-                onClick={() => navigate('/video-studio')}
-                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold rounded-lg transition-all shadow-lg"
-              >
-                <Video className="w-5 h-5" />
-                Open Video Studio
-              </button>
               <button
                 onClick={() => navigate('/ai-tools')}
                 className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-all"

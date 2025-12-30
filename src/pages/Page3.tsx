@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 import { ArrowLeft, Loader, Eye } from 'lucide-react';
 
 export default function Page3() {
