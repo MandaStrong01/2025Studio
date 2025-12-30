@@ -1,4 +1,3 @@
-```typescript
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Film, Scissors, Music, Sliders, Layers, Sparkles, Clock, Upload, Zap, FileText, CheckCircle } from 'lucide-react';
 import { useProject } from '../contexts/ProjectContext';
@@ -414,4 +413,3 @@ Maintain all original content and visual style throughout.`;
     </div>
   );
 }
-```
