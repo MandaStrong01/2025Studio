@@ -58,10 +58,10 @@ export default function App() {
 
             <Route path="/timeline" element={<SubscriptionGuard><Page10 /></SubscriptionGuard>} />
 
-            {/* PAGE 10.5 */}
+            {/* PAGE 10.5 — MEDIA LIBRARY / PREVIEW */}
             <Route path="/page10-5" element={<SubscriptionGuard><Page10_5 /></SubscriptionGuard>} />
 
-            {/* PAGE 11 – MEDIA STUDIO */}
+            {/* PAGE 11 — MEDIA STUDIO */}
             <Route path="/media" element={<SubscriptionGuard><Page11 /></SubscriptionGuard>} />
 
             <Route path="/export" element={<SubscriptionGuard><Page12 /></SubscriptionGuard>} />
