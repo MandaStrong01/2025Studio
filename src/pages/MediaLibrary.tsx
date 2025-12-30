@@ -6,7 +6,6 @@ import { supabase } from '../lib/supabase';
 import { useState, useEffect } from 'react';
 import EditorNav from '../components/EditorNav';
 import MediaSkeleton from '../components/MediaSkeleton';
-
 export default function MediaLibrary() {
   const navigate = useNavigate();
   const { user, isAdmin } = useAuth();
