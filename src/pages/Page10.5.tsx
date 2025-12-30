@@ -1,3 +1,4 @@
+import MediaLibrary from "./MediaLibrary";
 import VideoPlayer from "../components/VideoPlayer";
 
 export default function Page10_5() {
@@ -10,8 +11,17 @@ export default function Page10_5() {
         padding: "24px",
       }}
     >
-      <h1>Movie Preview</h1>
-      <VideoPlayer />
+      <h1 style={{ marginBottom: "16px" }}>
+        Media Library & Preview
+      </h1>
+
+      {/* 🎞 Video Preview */}
+      <div style={{ marginBottom: "32px" }}>
+        <VideoPlayer />
+      </div>
+
+      {/* 📁 Media Library */}
+      <MediaLibrary />
     </div>
   );
 }
