@@ -1,48 +1,58 @@
-import { useState } from "react";
+import React, { useState, ChangeEvent } from "react";
 import { Upload, Film, Sparkles, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useProject } from "../contexts/ProjectContext";
 import EditorNav from "../components/EditorNav";
 
-export default function MediaLibrary() {
-  const navigate = useNavigate();
+type Asset = {
+  user_id: string;
+  project_id: string;
+  file_name: string;
+  file_type: string;
+  file_url: string;
+  file_size: number;
+  duration: number;
+  metadata: Record<string, unknown>;
+};
+
+export default function MediaLibrary(): JSX.Element {
   const { user } = useAuth();
   const { addMediaFiles, currentProject } = useProject();
 
-  const [assets, setAssets] = useState<any[]>([]);
-  const [openStudio, setOpenStudio] = useState(false);
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [openStudio, setOpenStudio] = useState<boolean>(false);
 
-  const [aiPrompt, setAiPrompt] = useState("");
-  const [aiMode, setAiMode] = useState("Full Enhancement");
-  const [aiDuration, setAiDuration] = useState(60);
+  const [aiPrompt, setAiPrompt] = useState<string>("");
+  const [aiMode, setAiMode] = useState<string>("Full Enhancement");
+  const [aiDuration, setAiDuration] = useState<number>(60);
 
-  /* UPLOAD */
-  const handleUpload = (files: FileList | null) => {
+  /* ---------- Upload ---------- */
+  const handleUpload = (e: ChangeEvent<HTMLInputElement>): void => {
+    const files = e.target.files;
     if (!files || !user) return;
 
-    const uploaded = Array.from(files).map((file) => ({
+    const uploaded: Asset[] = Array.from(files).map((file) => ({
       user_id: user.id,
-      project_id: currentProject?.id || "default",
+      project_id: currentProject?.id ?? "default",
       file_name: file.name,
-      file_type: file.type.split("/")[0],
+      file_type: file.type.split("/")[0] || "file",
       file_url: "",
       file_size: file.size,
       duration: 0,
       metadata: { mime: file.type }
     }));
 
-    setAssets((p) => [...p, ...uploaded]);
+    setAssets((prev) => [...prev, ...uploaded]);
     addMediaFiles(uploaded);
   };
 
-  /* AI GENERATE (ONCE) */
-  const generateAiAssets = () => {
-    if (!aiPrompt.trim() || !user) return;
+  /* ---------- AI Generate ---------- */
+  const generateAiAssets = (): void => {
+    if (!user || !aiPrompt.trim()) return;
 
-    const aiAsset = {
+    const aiAsset: Asset = {
       user_id: user.id,
-      project_id: currentProject?.id || "default",
+      project_id: currentProject?.id ?? "default",
       file_name: `AI Generated Movie (${aiMode})`,
       file_type: "ai",
       file_url: "",
@@ -51,7 +61,7 @@ export default function MediaLibrary() {
       metadata: { prompt: aiPrompt, mode: aiMode }
     };
 
-    setAssets((p) => [...p, aiAsset]);
+    setAssets((prev) => [...prev, aiAsset]);
     addMediaFiles([aiAsset]);
     setAiPrompt("");
     setOpenStudio(false);
@@ -61,10 +71,9 @@ export default function MediaLibrary() {
     <div className="min-h-screen bg-black text-white p-8">
       <EditorNav />
 
-      {/* HEADER */}
       <h1 className="text-5xl font-black mb-8">MEDIA LIBRARY</h1>
 
-      {/* UPLOAD */}
+      {/* Upload */}
       <div className="mb-10 border-2 border-dashed border-purple-600 p-10 rounded-xl text-center">
         <Upload className="mx-auto mb-3 text-purple-400" />
         <p className="mb-2">Click to upload or drag & drop</p>
@@ -72,27 +81,27 @@ export default function MediaLibrary() {
           type="file"
           multiple
           accept="image/*,video/*,audio/*"
-          onChange={(e) => handleUpload(e.target.files)}
+          onChange={handleUpload}
         />
       </div>
 
-      {/* ASSETS */}
+      {/* Assets */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
         {assets.length === 0 && (
           <p className="text-gray-400 col-span-full">No assets yet.</p>
         )}
-        {assets.map((a, i) => (
+        {assets.map((asset, index) => (
           <div
-            key={i}
+            key={index}
             className="border border-purple-700/40 p-4 rounded-lg text-sm"
           >
             <Film className="w-4 h-4 text-purple-400 mb-2" />
-            {a.file_name}
+            {asset.file_name}
           </div>
         ))}
       </div>
 
-      {/* OPEN VIDEO STUDIO BUTTON */}
+      {/* Open Video Studio */}
       <button
         onClick={() => setOpenStudio(true)}
         className="px-8 py-4 bg-gradient-to-r from-purple-600 to-purple-800 rounded-xl font-black"
@@ -100,40 +109,36 @@ export default function MediaLibrary() {
         Open Video Studio
       </button>
 
-      {/* MODAL */}
+      {/* Modal */}
       {openStudio && (
         <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-6">
-          <div className="max-w-4xl w-full bg-black border border-purple-700 rounded-2xl p-8 max-h-[90vh] overflow-y-auto">
-
-            {/* HEADER */}
+          <div className="max-w-4xl w-full bg-black border border-purple-700 rounded-2xl p-8">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-3xl font-black flex items-center gap-2">
                 <Sparkles className="text-purple-400" />
                 Open Video Studio
               </h2>
               <button onClick={() => setOpenStudio(false)}>
-                <X className="w-6 h-6 text-white" />
+                <X className="w-6 h-6" />
               </button>
             </div>
 
-            {/* MODES */}
             <div className="flex gap-3 mb-4 flex-wrap">
-              {["Full Enhancement", "Gap Filling", "Duration Extend", "Custom"].map((m) => (
+              {["Full Enhancement", "Gap Filling", "Duration Extend", "Custom"].map((mode) => (
                 <button
-                  key={m}
-                  onClick={() => setAiMode(m)}
+                  key={mode}
+                  onClick={() => setAiMode(mode)}
                   className={`px-4 py-2 rounded border ${
-                    aiMode === m
+                    aiMode === mode
                       ? "bg-purple-600 border-purple-500"
                       : "border-purple-700"
                   }`}
                 >
-                  {m}
+                  {mode}
                 </button>
               ))}
             </div>
 
-            {/* PROMPT */}
             <textarea
               value={aiPrompt}
               onChange={(e) => setAiPrompt(e.target.value)}
@@ -141,7 +146,6 @@ export default function MediaLibrary() {
               className="w-full h-32 bg-black border border-purple-700 p-4 mb-4"
             />
 
-            {/* DURATION */}
             <input
               type="range"
               min={1}
@@ -151,7 +155,6 @@ export default function MediaLibrary() {
               className="w-full mb-6"
             />
 
-            {/* ACTION */}
             <button
               onClick={generateAiAssets}
               className="px-8 py-4 bg-purple-700 font-black rounded-xl"
@@ -161,14 +164,6 @@ export default function MediaLibrary() {
           </div>
         </div>
       )}
-
-      {/* NEXT */}
-      <button
-        onClick={() => navigate("/timeline")}
-        className="mt-10 block px-10 py-4 bg-gradient-to-r from-purple-600 to-purple-800 rounded-xl font-black"
-      >
-        Next: Timeline
-      </button>
     </div>
   );
 }
