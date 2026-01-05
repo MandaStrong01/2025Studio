@@ -1,96 +1,54 @@
 import React, { useState } from 'react';
-import MediaLibrary from './components/MediaLibrary';
-import VideoEditor from './components/VideoEditor';
 
-// Mock function for the 600 tools logic
-import { getToolsForPage } from './data/tools'; 
+// --- 1. THE EDITOR ---
+const VideoEditor = ({ onClose, duration, setDuration }) => (
+  <div className="fixed inset-0 bg-black z-[999] flex flex-col font-sans text-white border-2 border-purple-600">
+    <div className="h-12 bg-zinc-900 flex justify-between items-center px-6 border-b border-purple-500">
+      <span className="text-purple-400 font-bold uppercase text-xs">Cinecraft Master Editor</span>
+      <button onClick={onClose} className="text-white hover:text-purple-400 font-bold text-xl">✕</button>
+    </div>
+    <div className="flex-1 flex p-8 gap-8 bg-black">
+      <div className="flex-1 bg-zinc-950 border border-zinc-800 rounded flex items-center justify-center italic text-zinc-700">Preview Monitor</div>
+      <div className="w-80 bg-zinc-900 p-6 border border-purple-900 flex flex-col gap-6">
+        <h3 className="text-sm font-bold border-b border-purple-900 pb-2 uppercase text-purple-400">Enhancement Suite</h3>
+        <label className="text-xs font-bold">Duration: {duration} Min</label>
+        <input type="range" min="0" max="180" value={duration} onChange={(e) => setDuration(Number(e.target.value))} className="w-full h-1 bg-zinc-800 accent-purple-600 cursor-pointer" />
+        <button className="mt-auto bg-purple-700 py-4 font-black uppercase text-xs border border-purple-300" onClick={() => alert('Processing AI Render...')}>AI Generate Asset</button>
+      </div>
+    </div>
+  </div>
+);
 
+// --- 2. THE APP ---
 export default function App() {
-  // 1. ALL STATES (FIXED LINE 186-188)
-  const [page, setPage] = useState(1);
-  const [movieDuration, setMovieDuration] = useState(60); 
-  const [showVideoEditor, setShowVideoEditor] = useState(false);
-  const [activeTool, setActiveTool] = useState<string | null>(null);
-  const [isMuted, setIsMuted] = useState(true);
-
-  // 2. NAVIGATION HELPER
-  const nextPage = () => setPage((prev) => Math.min(prev + 1, 21));
-  const prevPage = () => setPage((prev) => Math.max(prev - 1, 1));
+  const [page, setPage] = useState(11);
+  const [showEditor, setShowEditor] = useState(false);
+  const [duration, setDuration] = useState(60);
 
   return (
-    <div className="min-h-screen bg-black text-white font-cinematic selection:bg-purple-500">
-      
-      {/* PAGE 1: CINEMATIC INTRO */}
-      {page === 1 && (
-        <div className="h-screen flex flex-col items-center justify-center relative overflow-hidden">
-          <video autoPlay loop muted={isMuted} className="fixed inset-0 w-full h-full object-cover -z-10 opacity-60">
-            <source src="/video/background.mp4" type="video/mp4" />
-          </video>
-          <h1 className="text-white text-7xl font-black uppercase mb-4 tracking-tighter">MandaStrong Studio</h1>
-          <p className="text-zinc-400 text-xl tracking-[0.3em] mb-12 uppercase">Make-A-Movie AI Studio</p>
-          <button onClick={() => setPage(2)} className="border-2 border-white px-16 py-4 hover:bg-white hover:text-black transition-all font-bold uppercase">Enter Studio</button>
-        </div>
-      )}
-
-      {/* PAGES 4-9: 600 AI TOOL BOARDS */}
-      {page >= 4 && page <= 9 && (
-        <div className="p-10 flex flex-col h-screen">
-          <h2 className="text-4xl font-black mb-8 uppercase text-center border-b border-zinc-800 pb-4">AI Tools Board - Page {page}</h2>
-          <div className="grid grid-cols-5 gap-4 overflow-y-auto flex-1 pr-4">
-            {getToolsForPage(page).map((tool) => (
-              <button 
-                key={tool} 
-                onClick={() => setActiveTool(tool)}
-                className="bg-zinc-900 border border-zinc-800 p-6 hover:border-purple-500 transition-all uppercase text-[10px] font-bold tracking-widest"
-              >
-                {tool}
-              </button>
-            ))}
-          </div>
-          <div className="flex justify-between mt-8">
-            <button onClick={prevPage} className="border border-zinc-700 px-8 py-2 uppercase text-xs">Back</button>
-            <button onClick={nextPage} className="border border-zinc-700 px-8 py-2 uppercase text-xs">Next</button>
-          </div>
-        </div>
-      )}
-
-      {/* PAGE 11: MEDIA LIBRARY & ENHANCEMENT SUITE */}
+    <div className="min-h-screen bg-black text-white p-8">
       {page === 11 && (
-        <div className="h-screen relative bg-black">
-          <MediaLibrary />
-          {/* This logic connects the button in MediaLibrary to the state here */}
-          {showVideoEditor && (
-            <VideoEditor onClose={() => setShowVideoEditor(false)} />
-          )}
-          {/* Global Next/Back for Page 11 */}
-          <div className="fixed bottom-4 right-8 flex gap-4 z-50">
-            <button onClick={prevPage} className="bg-zinc-900 px-6 py-2 text-[10px] border border-zinc-700 uppercase">Back</button>
-            <button onClick={nextPage} className="bg-white text-black px-6 py-2 text-[10px] border border-white uppercase font-bold">Next Page</button>
+        <div className="h-full relative">
+          <div className="flex justify-between items-center border-b-2 border-purple-900 pb-6 mb-8">
+            <h1 className="text-4xl font-black uppercase italic">Media Library</h1>
+            <button onClick={() => setShowEditor(true)} className="bg-purple-800 text-white px-8 py-3 font-black uppercase text-xs border border-purple-400">Open Video Editor</button>
+          </div>
+          <div className="grid grid-cols-4 gap-6">
+            <div className="aspect-video bg-zinc-900 border border-zinc-800 flex items-center justify-center text-[9px] text-zinc-500 uppercase font-bold">Asset_01.mp4</div>
+          </div>
+          {showEditor && <VideoEditor onClose={() => setShowEditor(false)} duration={duration} setDuration={setDuration} />}
+          <div className="mt-20 flex gap-4">
+            <button onClick={() => setPage(10)} className="border border-zinc-800 px-6 py-2 text-xs uppercase">Back</button>
+            <button onClick={() => setPage(12)} className="bg-white text-black px-6 py-2 text-xs font-bold uppercase">Next</button>
           </div>
         </div>
       )}
-
-      {/* PAGE 21: FINALE */}
-      {page === 21 && (
-        <div className="h-screen flex flex-col items-center justify-center bg-black">
-          <video autoPlay className="w-full max-w-4xl shadow-[0_0_50px_rgba(168,85,247,0.3)]">
-            <source src="/video/thatsallfolks.mp4" type="video/mp4" />
-          </video>
-          <button onClick={() => setPage(1)} className="mt-12 text-zinc-500 hover:text-white uppercase tracking-widest text-xs">Restart Experience</button>
+      {page !== 11 && (
+        <div className="flex flex-col items-center justify-center h-screen">
+          <h2 className="text-4xl font-black uppercase mb-8">Page {page}</h2>
+          <button onClick={() => setPage(11)} className="border border-purple-500 px-8 py-3 uppercase text-xs">Back to Editor</button>
         </div>
       )}
-
-      {/* DEFAULT NAVIGATION FOR OTHER PAGES */}
-      {page !== 1 && page !== 11 && page !== 21 && (page < 4 || page > 9) && (
-        <div className="h-screen flex flex-col items-center justify-center p-20">
-          <h2 className="text-5xl font-black uppercase mb-10">Page {page}</h2>
-          <div className="flex gap-10">
-            <button onClick={prevPage} className="border border-white px-10 py-3 uppercase text-xs">Back</button>
-            <button onClick={nextPage} className="border border-white px-10 py-3 uppercase text-xs font-black">Proceed</button>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }
