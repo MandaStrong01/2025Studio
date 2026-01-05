@@ -114,12 +114,13 @@ export default function App() {
         </div>
       )}
 
+      {/* FALLBACK PAGES */}
       {page !== 11 && page !== 12 && (
         <div className="h-screen flex flex-col items-center justify-center">
-          <h2 className="text-2xl font-bold uppercase mb-4">Page {page}</h2>
-          <button onClick={() => setPage(11)} className="border border-purple-500 px-8 py-2 text-[10px] uppercase">Back to Studio</button>
+          <h2 className="text-2xl font-bold uppercase mb-4 text-purple-500">Page {page}</h2>
+          <button onClick={() => setPage(11)} className="border border-white px-8 py-2 text-[10px] font-bold uppercase">Return to Studio</button>
         </div>
       )}
     </div>
   );
-}
+} 
