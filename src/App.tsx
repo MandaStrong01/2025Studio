@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 
-// --- 1. THE VIDEO EDITOR ATTACHMENT (PAGE 11 EXTENSION) ---
-const VideoEditor = ({ onClose, duration, setDuration }) => {
+// --- 1. THE VIDEO EDITOR ATTACHMENT ---
+const VideoEditor = ({ onClose, duration, setDuration }: { onClose: () => void, duration: number, setDuration: (val: number) => void }) => {
   return (
-    <div className="fixed inset-0 bg-black z-[999] flex flex-col font-sans text-white border-2 border-purple-600">
+    <div className="fixed inset-0 bg-black z-[999] flex flex-col font-sans text-white border-2 border-purple-600 animate-in fade-in duration-300">
       <div className="h-14 bg-zinc-900 flex justify-between items-center px-6 border-b border-purple-500">
-        <span className="text-purple-400 font-bold uppercase tracking-widest text-xs">Cinecraft Master Enhancement Suite</span>
+        <span className="text-purple-400 font-bold uppercase tracking-widest text-xs italic">Cinecraft Master Enhancement Suite</span>
         <button onClick={onClose} className="text-white hover:text-purple-400 font-bold text-2xl transition-all">✕</button>
       </div>
 
@@ -35,9 +35,9 @@ const VideoEditor = ({ onClose, duration, setDuration }) => {
           </div>
 
           <div className="flex flex-col gap-2 mt-4">
-            <button className="text-[10px] p-3 border border-zinc-800 hover:border-purple-500 bg-black font-bold uppercase transition-all">🪄 AI 4K Upscale</button>
-            <button className="text-[10px] p-3 border border-zinc-800 hover:border-purple-500 bg-black font-bold uppercase transition-all">🎨 Cine-Color LUT</button>
-            <button className="text-[10px] p-3 border border-zinc-800 hover:border-purple-500 bg-black font-bold uppercase transition-all">🔊 Audio Master</button>
+            <button className="text-[10px] p-3 border border-zinc-800 hover:border-purple-500 bg-black font-bold uppercase transition-all hover:bg-zinc-950">🪄 AI 4K Upscale</button>
+            <button className="text-[10px] p-3 border border-zinc-800 hover:border-purple-500 bg-black font-bold uppercase transition-all hover:bg-zinc-950">🎨 Cine-Color LUT</button>
+            <button className="text-[10px] p-3 border border-zinc-800 hover:border-purple-500 bg-black font-bold uppercase transition-all hover:bg-zinc-950">🔊 Audio Master</button>
           </div>
 
           <button 
@@ -54,7 +54,7 @@ const VideoEditor = ({ onClose, duration, setDuration }) => {
 
 // --- 2. MAIN APP COMPONENT ---
 export default function App() {
-  const [page, setPage] = useState(11); // Starting at Page 11 for your testing group
+  const [page, setPage] = useState(11); 
   const [showEditor, setShowEditor] = useState(false);
   const [duration, setDuration] = useState(60);
 
@@ -67,7 +67,6 @@ export default function App() {
           <div className="flex justify-between items-center border-b-2 border-purple-900 pb-6 mb-10">
             <h1 className="text-5xl font-black uppercase italic tracking-tighter">Media Library</h1>
             
-            {/* BUTTON AT TOP RIGHT */}
             <button 
               onClick={() => setShowEditor(true)}
               className="bg-purple-800 hover:bg-purple-700 text-white px-10 py-4 font-black uppercase text-xs border border-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-all active:scale-95"
@@ -76,7 +75,6 @@ export default function App() {
             </button>
           </div>
 
-          {/* Library Assets */}
           <div className="grid grid-cols-4 gap-8 flex-1 overflow-y-auto pr-4">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="aspect-video bg-zinc-900/40 border border-zinc-800 flex flex-col items-center justify-center hover:border-purple-500 cursor-pointer group transition-all">
@@ -86,46 +84,42 @@ export default function App() {
             ))}
           </div>
 
-          {/* Page Navigation */}
           <div className="mt-10 flex justify-between items-center border-t border-zinc-900 pt-6">
-            <button onClick={() => setPage(10)} className="text-zinc-600 hover:text-white uppercase text-[10px] font-bold tracking-widest transition-colors">← Back to Page 10</button>
-            <button onClick={() => setPage(12)} className="bg-white text-black px-12 py-3 font-black uppercase text-xs hover:bg-purple-500 hover:text-white transition-all">Proceed to Page 12 →</button>
+            <button onClick={() => setPage(10)} className="text-zinc-600 hover:text-white uppercase text-[10px] font-bold tracking-widest transition-colors">← Back</button>
+            <button onClick={() => setPage(12)} className="bg-white text-black px-12 py-3 font-black uppercase text-xs hover:bg-purple-500 hover:text-white transition-all font-bold">Proceed to Page 12 →</button>
           </div>
 
-          {/* THE EDITOR OVERLAY */}
           {showEditor && <VideoEditor onClose={() => setShowEditor(false)} duration={duration} setDuration={setDuration} />}
         </div>
       )}
 
-      {/* PAGE 12: PLACEHOLDERS FOR SOCIAL MEDIA/TESTING */}
+      {/* PAGE 12: PLACEHOLDERS */}
       {page === 12 && (
         <div className="h-screen flex flex-col p-10 animate-in slide-in-from-right duration-500">
            <div className="flex justify-between items-center border-b border-zinc-800 pb-6 mb-10">
-             <h1 className="text-4xl font-black uppercase tracking-tighter">Page 12: Master Export</h1>
+             <h1 className="text-4xl font-black uppercase tracking-tighter italic">Master Export Suite</h1>
              <button onClick={() => setPage(11)} className="text-xs uppercase font-bold border border-zinc-700 px-4 py-2">Back to Library</button>
            </div>
            
            <div className="flex-1 grid grid-cols-2 gap-10">
               <div className="border-2 border-dashed border-zinc-800 rounded-2xl flex flex-col items-center justify-center p-10 bg-zinc-900/10">
-                <p className="text-zinc-500 uppercase font-bold text-xs mb-4">Placeholder: Cinematic Poster</p>
-                <div className="w-48 h-72 bg-zinc-800 rounded shadow-2xl border border-zinc-700"></div>
+                <p className="text-zinc-500 uppercase font-black text-xs mb-4">Master Poster</p>
+                <div className="w-48 h-72 bg-zinc-800 rounded shadow-2xl border border-zinc-700 animate-pulse"></div>
               </div>
               <div className="border-2 border-dashed border-zinc-800 rounded-2xl flex flex-col items-center justify-center p-10 bg-zinc-900/10">
-                <p className="text-zinc-500 uppercase font-bold text-xs mb-4">Placeholder: Social Media Trailer</p>
-                <div className="w-full aspect-video bg-zinc-800 rounded shadow-2xl border border-zinc-700"></div>
+                <p className="text-zinc-500 uppercase font-black text-xs mb-4">Trailer Trailer</p>
+                <div className="w-full aspect-video bg-zinc-800 rounded shadow-2xl border border-zinc-700 animate-pulse"></div>
               </div>
            </div>
         </div>
       )}
 
-      {/* Catch-all for other pages */}
       {page !== 11 && page !== 12 && (
         <div className="h-screen flex flex-col items-center justify-center">
-          <h2 className="text-2xl font-bold uppercase mb-4 text-purple-500">Page {page}</h2>
-          <button onClick={() => setPage(11)} className="border border-white px-8 py-2 text-[10px] font-bold uppercase">Return to Studio</button>
+          <h2 className="text-2xl font-bold uppercase mb-4">Page {page}</h2>
+          <button onClick={() => setPage(11)} className="border border-purple-500 px-8 py-2 text-[10px] uppercase">Back to Studio</button>
         </div>
       )}
-
     </div>
   );
 }
