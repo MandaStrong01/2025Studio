@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-// --- THE ENHANCEMENT SUITE (OPEN VIDEO STUDIO ATTACHMENT) ---
+// --- 1. THE VIDEO STUDIO ATTACHMENT (ENHANCEMENT SUITE) ---
 const VideoStudio = ({ onClose, duration, setDuration }: any) => (
   <div className="fixed inset-0 bg-black z-[1000] flex flex-col font-sans text-white border-2 border-purple-600 animate-in fade-in duration-300">
     <div className="h-14 bg-zinc-900 flex justify-between items-center px-6 border-b border-purple-500 shadow-lg">
@@ -33,6 +33,7 @@ const VideoStudio = ({ onClose, duration, setDuration }: any) => (
   </div>
 );
 
+// --- 2. THE MAIN APP ---
 export default function App() {
   const [page, setPage] = useState(11);
   const [showStudio, setShowStudio] = useState(false);
@@ -40,16 +41,16 @@ export default function App() {
   const [duration, setDuration] = useState(60);
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans selection:bg-purple-500">
+    <div className="min-h-screen bg-black text-white font-sans">
       
-      {/* PAGE 11: EDITOR SUITE PRIMARY VIEW */}
+      {/* PAGE 11: EDITOR SUITE */}
       {page === 11 && (
         <div className="h-screen flex flex-col p-8 relative animate-in fade-in duration-700">
           
-          {/* TOP NAVIGATION BOXES AREA */}
+          {/* TOP NAVIGATION BOXES */}
           <div className="flex justify-between items-start mb-12">
             <div>
-              <h1 className="text-5xl font-black uppercase italic tracking-tighter leading-none">Editor Suite</h1>
+              <h1 className="text-5xl font-black uppercase italic tracking-tighter leading-none text-white">Editor Suite</h1>
               <p className="text-zinc-600 text-[10px] font-bold uppercase tracking-[0.4em] mt-2">Studio v2.0 // Processing Hub</p>
             </div>
             
@@ -70,6 +71,7 @@ export default function App() {
             <span className="text-zinc-800 font-black text-6xl uppercase tracking-tighter opacity-20 italic">Main Workspace</span>
           </div>
 
+          {/* ADVANCED VIEWER OVERLAY */}
           {showAdvancedTools && (
             <div className="fixed inset-0 bg-black/95 z-50 p-10 animate-in slide-in-from-right duration-500">
               <div className="flex justify-between items-center border-b-2 border-purple-900 pb-6 mb-10">
@@ -96,7 +98,7 @@ export default function App() {
 
           <div className="mt-10 flex justify-between items-center border-t border-zinc-900 pt-8">
             <button onClick={() => setPage(10)} className="text-zinc-600 hover:text-white uppercase text-[11px] font-black tracking-[0.2em] transition-colors italic">← Back</button>
-            <button onClick={() => setPage(12)} className="bg-white text-black px-16 py-4 font-black uppercase text-xs hover:bg-purple-500 hover:text-white transition-all tracking-widest shadow-xl">Proceed to Page 12 →</button>
+            <button onClick={() => setPage(12)} className="bg-white text-black px-16 py-4 font-black uppercase text-xs hover:bg-purple-500 hover:text-white transition-all tracking-widest shadow-xl font-bold">Proceed to Page 12 →</button>
           </div>
 
           {showStudio && <VideoStudio onClose={() => setShowStudio(false)} duration={duration} setDuration={setDuration} />}
