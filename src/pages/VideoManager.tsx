@@ -65,4 +65,4 @@ const VideoStudio = ({ onClose, duration, setDuration }: any) => (
       </div>
     </div>
   </div>
-);
+)
