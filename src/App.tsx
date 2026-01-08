@@ -1,120 +1,91 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Upload, Library, Wand2, Play, Sparkles, FileVideo, FileAudio, Cpu, MessageSquare } from 'lucide-react';
 
-// --- 1. THE VIDEO STUDIO ATTACHMENT (ENHANCEMENT SUITE) ---
-const VideoStudio = ({ onClose, duration, setDuration }: any) => (
-  <div className="fixed inset-0 bg-black z-[1000] flex flex-col font-sans text-white border-2 border-purple-600 animate-in fade-in duration-300">
-    <div className="h-14 bg-zinc-900 flex justify-between items-center px-6 border-b border-purple-500 shadow-lg">
-      <span className="text-purple-400 font-black uppercase tracking-[0.3em] text-xs italic">Master Enhancement Studio</span>
-      <button onClick={onClose} className="text-white hover:text-purple-400 font-bold text-2xl transition-all">✕</button>
-    </div>
-    <div className="flex-1 flex p-8 gap-8 bg-black overflow-hidden">
-      <div className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl flex items-center justify-center relative shadow-[inset_0_0_50px_rgba(0,0,0,1)]">
-         <div className="absolute top-4 left-4 text-[10px] text-purple-500 font-bold uppercase tracking-widest bg-black/80 px-3 py-1 border border-purple-900/50">Monitor 01 // Master Render</div>
-         <p className="text-zinc-800 italic uppercase text-[10px] tracking-[0.4em]">Ready for AI Processing</p>
-      </div>
-      <div className="w-80 bg-zinc-900 p-6 border border-purple-900 flex flex-col gap-6 shadow-[0_0_50px_rgba(88,28,135,0.2)]">
-        <h3 className="text-xs font-black border-b border-purple-900 pb-3 uppercase tracking-widest text-purple-400">Advanced Tools</h3>
-        <div className="flex flex-col gap-4">
-          <div className="flex justify-between items-end">
-             <label className="text-[10px] uppercase text-zinc-500 font-black tracking-widest">Timeline Duration</label>
-             <span className="text-2xl font-black text-white">{duration}<small className="text-[10px] ml-1">M</small></span>
-          </div>
-          <input type="range" min="0" max="180" value={duration} onChange={(e) => setDuration(Number(e.target.value))} className="w-full h-1 bg-zinc-800 accent-purple-600 cursor-pointer appearance-none rounded-full" />
-          <div className="flex justify-between text-[9px] text-zinc-600 font-black tracking-tighter"><span>0 MIN</span><span>90 MIN</span><span>180 MIN</span></div>
-        </div>
-        <div className="flex flex-col gap-2">
-          {["✨ AI 4K Upscale", "🎨 Cine-Color LUT", "🔊 Audio Master Pro", "✂️ Auto-Scene Cut"].map(tool => (
-            <button key={tool} className="text-[9px] p-3 border border-zinc-800 hover:border-purple-500 bg-black font-black uppercase tracking-widest transition-all hover:bg-zinc-950 text-left">{tool}</button>
-          ))}
-        </div>
-        <button className="mt-auto bg-purple-700 hover:bg-purple-600 py-5 font-black uppercase text-[11px] border border-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all active:scale-95" onClick={() => alert(`AI Render Started: ${duration}m`)}>AI Generate Asset</button>
-      </div>
-    </div>
-  </div>
-);
-
-// --- 2. THE MAIN APP ---
 export default function App() {
-  const [page, setPage] = useState(11);
-  const [showStudio, setShowStudio] = useState(false);
-  const [showAdvancedTools, setShowAdvancedTools] = useState(false);
-  const [duration, setDuration] = useState(60);
+  const [page, setPage] = useState(1);
+  const [assets, setAssets] = useState([]); 
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      if (page <= 2) {
+        videoRef.current.play().catch(() => {});
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  }, [page]);
+
+  const Navigation = () => (
+    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-4 z-[100]">
+      <button onClick={() => setPage(Math.max(1, page - 1))} className="bg-black text-white px-8 py-3 rounded-full font-black uppercase text-[10px] border border-white/20 hover:bg-white hover:text-black transition-all">← BACK</button>
+      <button onClick={() => setPage(Math.min(21, page + 1))} className="bg-black text-white px-8 py-3 rounded-full font-black uppercase text-[10px] border border-white/20 hover:bg-white hover:text-black transition-all">NEXT →</button>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans">
-      
-      {/* PAGE 11: EDITOR SUITE */}
+    <div className="h-screen bg-black overflow-hidden relative font-black italic">
+      <video ref={videoRef} className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${page <= 2 ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} src="background.mp4" loop playsInline />
+
+      {/* NODE 1 & 2: THE SPLASH */}
+      {(page === 1 || page === 2) && (
+        <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-4">
+          <h1 className="text-7xl md:text-9xl text-black uppercase leading-none font-black tracking-tighter">MANDASTRONG'S STUDIO</h1>
+          <p className="text-xl text-black uppercase mt-4 font-black">{page === 1 ? "All-In-One Movie App" : "Make Your Dreams Reality"}</p>
+          <button onClick={() => setPage(page + 1)} className="absolute bottom-20 bg-black text-white px-12 py-4 rounded-xl font-black uppercase tracking-widest hover:scale-105 transition-all">Next</button>
+        </div>
+      )}
+
+      {/* NODE 3: PRICING ($20, $40, $80) */}
+      {page === 3 && (
+        <div className="h-full bg-black flex flex-col items-center p-8 border-[15px] border-zinc-900 overflow-y-auto pb-32">
+          <div className="grid grid-cols-2 gap-6 w-full max-w-5xl mb-10">
+            <div className="bg-[#1a0b2e] p-8 rounded-3xl border-2 border-purple-500/30 text-white text-center font-black"><h2>LOGIN</h2></div>
+            <div className="bg-[#1a0b2e] p-8 rounded-3xl border-2 border-purple-500/30 text-white text-center font-black"><h2>REGISTER</h2></div>
+          </div>
+          <div className="grid grid-cols-3 gap-4 w-full max-w-6xl">
+            {[{t:"Basic", p:"20"}, {t:"Pro", p:"40"}, {t:"Studio", p:"80"}].map((plan, i) => (
+              <div key={i} className="bg-[#0d0517] p-6 rounded-2xl border-2 border-purple-500/10 text-white text-center font-black">
+                <h3 className="text-xl uppercase">{plan.t}</h3>
+                <div className="text-6xl font-black tracking-tighter">${plan.p}</div>
+                <button onClick={() => setPage(4)} className="w-full bg-purple-600 mt-4 py-3 rounded-xl uppercase tracking-widest hover:bg-purple-500">SELECT</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* NODE 11: MEDIA LIBRARY */}
       {page === 11 && (
-        <div className="h-screen flex flex-col p-8 relative animate-in fade-in duration-700">
-          
-          {/* TOP NAVIGATION BOXES */}
-          <div className="flex justify-between items-start mb-12">
-            <div>
-              <h1 className="text-5xl font-black uppercase italic tracking-tighter leading-none text-white">Editor Suite</h1>
-              <p className="text-zinc-600 text-[10px] font-bold uppercase tracking-[0.4em] mt-2">Studio v2.0 // Processing Hub</p>
+        <div className="h-full bg-[#050505] text-white flex flex-col border-[20px] border-zinc-900 italic font-black">
+          <div className="flex-1 p-10 flex flex-col relative overflow-hidden">
+            <div className="flex justify-between items-center mb-10">
+              <h2 className="text-5xl uppercase tracking-tighter font-black font-black">Library ({assets.length})</h2>
+              <button onClick={() => window.open('https://mandastrong-studio-global-enhancement.ai/engine-v2', '_blank')} className="bg-purple-600 px-8 py-3 rounded-xl font-black border border-white/20 uppercase shadow-2xl hover:scale-105 transition-all">Enhancement Suite</button>
             </div>
-            
-            <div className="flex gap-2">
-              {["Timeline", "Assets", "Effects"].map(box => (
-                <div key={box} className="w-24 h-20 border border-zinc-800 bg-zinc-900/30 flex items-center justify-center text-[9px] font-black uppercase tracking-widest text-zinc-500">{box}</div>
-              ))}
-              <button 
-                onClick={() => setShowAdvancedTools(true)}
-                className="w-24 h-20 border-2 border-purple-900 bg-purple-900/10 hover:bg-purple-600 hover:border-purple-400 flex items-center justify-center text-[9px] font-black uppercase tracking-widest text-purple-400 hover:text-white transition-all shadow-[0_0_15px_rgba(168,85,247,0.2)]"
-              >
-                Media Library
-              </button>
+            <div className="flex-1 border-4 border-dashed border-zinc-900 rounded-[4rem] flex items-center justify-center text-zinc-800 text-3xl uppercase font-black italic text-center px-10">
+              Media assets empty. Generate assets in the AI tool board.
             </div>
           </div>
-
-          <div className="flex-1 bg-zinc-900/20 border border-zinc-800 rounded-2xl flex items-center justify-center border-dashed">
-            <span className="text-zinc-800 font-black text-6xl uppercase tracking-tighter opacity-20 italic">Main Workspace</span>
-          </div>
-
-          {/* ADVANCED VIEWER OVERLAY */}
-          {showAdvancedTools && (
-            <div className="fixed inset-0 bg-black/95 z-50 p-10 animate-in slide-in-from-right duration-500">
-              <div className="flex justify-between items-center border-b-2 border-purple-900 pb-6 mb-10">
-                <h2 className="text-4xl font-black uppercase italic tracking-tighter">Viewer Advanced Tools</h2>
-                <div className="flex gap-4">
-                  <button 
-                    onClick={() => setShowStudio(true)}
-                    className="bg-purple-800 hover:bg-purple-700 text-white px-10 py-4 font-black uppercase text-xs border border-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-all"
-                  >
-                    Open Video Studio
-                  </button>
-                  <button onClick={() => setShowAdvancedTools(false)} className="bg-zinc-800 px-6 py-4 font-black uppercase text-xs border border-zinc-600">Close Viewer</button>
-                </div>
-              </div>
-              <div className="grid grid-cols-4 gap-8">
-                {[1, 2, 3, 4].map(i => (
-                  <div key={i} className="aspect-video bg-zinc-900 border border-zinc-800 flex items-center justify-center hover:border-purple-500 cursor-pointer group transition-all">
-                    <span className="text-zinc-700 uppercase text-[9px] font-bold tracking-[0.4em] group-hover:text-purple-400 transition-colors italic">Studio_Asset_0{i}.mp4</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="mt-10 flex justify-between items-center border-t border-zinc-900 pt-8">
-            <button onClick={() => setPage(10)} className="text-zinc-600 hover:text-white uppercase text-[11px] font-black tracking-[0.2em] transition-colors italic">← Back</button>
-            <button onClick={() => setPage(12)} className="bg-white text-black px-16 py-4 font-black uppercase text-xs hover:bg-purple-500 hover:text-white transition-all tracking-widest shadow-xl font-bold">Proceed to Page 12 →</button>
-          </div>
-
-          {showStudio && <VideoStudio onClose={() => setShowStudio(false)} duration={duration} setDuration={setDuration} />}
         </div>
       )}
 
-      {/* PAGE 12: EXPORT */}
-      {page === 12 && (
-        <div className="h-screen flex flex-col p-10 bg-zinc-950">
-           <div className="flex justify-between items-center border-b border-zinc-800 pb-6 mb-10 text-zinc-500 font-black uppercase text-xs tracking-widest">
-             <span>Export Protocol Active</span>
-             <button onClick={() => setPage(11)} className="border border-zinc-800 px-4 py-1">Return</button>
-           </div>
-           <div className="flex-1 border-2 border-dashed border-zinc-900 rounded-3xl flex items-center justify-center italic text-zinc-800 uppercase tracking-widest font-black text-2xl">Final Master Export Interface</div>
+      {/* NODE 21: FINALE */}
+      {page === 21 && (
+        <div className="h-full bg-black border-[20px] border-zinc-900 flex flex-col items-center justify-center relative italic font-black p-20 text-center">
+          <h1 className="text-7xl md:text-[10rem] text-purple-500 uppercase tracking-tighter mb-12 leading-none font-black">THAT'S ALL FOLKS!</h1>
+          <button onClick={() => setPage(1)} className="bg-white text-black px-16 py-6 rounded-full uppercase text-xl font-black hover:bg-purple-600 hover:text-white transition-all shadow-2xl">Restart Engine</button>
         </div>
       )}
+
+      {/* GENERIC NODES 4-20 */}
+      {![1,2,3,11,21].includes(page) && (
+        <div className="h-full bg-black border-[20px] border-zinc-900 flex flex-col items-center justify-center text-white italic font-black opacity-10 uppercase text-8xl md:text-9xl">
+          Node {page}
+        </div>
+      )}
+      
+      <Navigation />
     </div>
   );
 }
